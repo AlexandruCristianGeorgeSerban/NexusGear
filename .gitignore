@@ -1,0 +1,94 @@
+## =======================================================
+## 1. Reguli specifice proiectului & Securitate (Cerințe spec)
+## =======================================================
+# Secrete și variabile de mediu (spec: doar .env.example se urcă)
+.env
+.env.*
+!.env.example
+
+# Setări locale ce pot conține chei de API (ex. Stripe Test Keys)
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# Baza de date SQLite locală (se generează prin migrări și seed script)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Upload-uri locale de imagini făcute de utilizatori/admin în runtime
+wwwroot/uploads/
+!wwwroot/uploads/.gitkeep
+wwwroot/images/products/*
+!wwwroot/images/products/placeholder.*
+
+## =======================================================
+## 2. Compilare .NET & Build Artifacts
+## =======================================================
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.log
+
+# Fișiere generate de compilare
+*.dll
+*.exe
+*.pdb
+*.cache
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## =======================================================
+## 3. IDE-uri & Editoare de text
+## =======================================================
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+## =======================================================
+## 4. Testare automată & Code Coverage (xUnit)
+## =======================================================
+TestResults/
+[Tt]est[Rr]esult*/
+*.trx
+coverage*.json
+coverage*.xml
+*.coverage
+*.coveragexml
+
+## =======================================================
+## 5. Sistem de operare & Utilitare locale
+## =======================================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux & macOS
+.DS_Store
+.directory
+*~
+*.swp
+*.swo
+
+# Crash logs & core dumps
+core
+core.*
