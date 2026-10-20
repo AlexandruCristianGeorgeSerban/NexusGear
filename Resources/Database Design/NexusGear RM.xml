@@ -1,0 +1,150 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="NexusGear-RM" name="Relational-Model">
+    <mxGraphModel dx="1493" dy="881" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1150" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t_category" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="CATEGORY | &lt;u&gt;CategoryId&lt;/u&gt; (PK) | Name | Slug | Description" vertex="1">
+          <mxGeometry height="55" width="360" x="420" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="t_product" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="PRODUCT | &lt;u&gt;ProductId&lt;/u&gt; (PK) | Name | Description | Price | StockQuantity | ImageUrl | CreatedAt | RowVersion | &lt;b&gt;&lt;u&gt;CategoryId&lt;/u&gt;&lt;/b&gt; (FK)" vertex="1">
+          <mxGeometry height="55" width="760" x="220" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="t_user" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="USER | &lt;u&gt;UserId&lt;/u&gt; (PK) | Email | PasswordHash | FullName | Role | CreatedAt" vertex="1">
+          <mxGeometry height="55" width="460" x="370" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="t_cart" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="CART_ITEM | &lt;u&gt;CartItemId&lt;/u&gt; (PK) | Quantity | AddedAt | &lt;b&gt;&lt;u&gt;UserId&lt;/u&gt;&lt;/b&gt; (FK) | &lt;b&gt;&lt;u&gt;ProductId&lt;/u&gt;&lt;/b&gt; (FK)" vertex="1">
+          <mxGeometry height="55" width="500" x="350" y="355" as="geometry" />
+        </mxCell>
+        <mxCell id="t_wishlist" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="WISHLIST_ITEM | &lt;u&gt;WishlistItemId&lt;/u&gt; (PK) | AddedAt | &lt;b&gt;&lt;u&gt;UserId&lt;/u&gt;&lt;/b&gt; (FK) | &lt;b&gt;&lt;u&gt;ProductId&lt;/u&gt;&lt;/b&gt; (FK)" vertex="1">
+          <mxGeometry height="55" width="490" x="355" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="t_review" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="REVIEW | &lt;u&gt;ReviewId&lt;/u&gt; (PK) | Rating | Comment | IsHidden | CreatedAt | &lt;b&gt;&lt;u&gt;UserId&lt;/u&gt;&lt;/b&gt; (FK) | &lt;b&gt;&lt;u&gt;ProductId&lt;/u&gt;&lt;/b&gt; (FK)" vertex="1">
+          <mxGeometry height="55" width="600" x="300" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="t_address" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="ADDRESS | &lt;u&gt;AddressId&lt;/u&gt; (PK) | Street | City | County | PostalCode | Phone | IsDefault | &lt;b&gt;&lt;u&gt;UserId&lt;/u&gt;&lt;/b&gt; (FK)" vertex="1">
+          <mxGeometry height="55" width="590" x="305" y="670" as="geometry" />
+        </mxCell>
+        <mxCell id="t_discount" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="DISCOUNT_CODE | &lt;u&gt;DiscountCodeId&lt;/u&gt; (PK) | Code | DiscountType | DiscountValue | ExpiryDate | MaxUses | UsedCount" vertex="1">
+          <mxGeometry height="55" width="710" x="245" y="775" as="geometry" />
+        </mxCell>
+        <mxCell id="t_order" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="ORDER | &lt;u&gt;OrderId&lt;/u&gt; (PK) | OrderNumber | OrderDate | Status | ShippingMethod | ShippingCost | DiscountAmount | TotalAmount | StripeSessionId | &lt;b&gt;&lt;u&gt;UserId&lt;/u&gt;&lt;/b&gt; (FK) | &lt;b&gt;&lt;u&gt;AddressId&lt;/u&gt;&lt;/b&gt; (FK) | &lt;b&gt;&lt;u&gt;DiscountCodeId&lt;/u&gt;&lt;/b&gt; (FK)" vertex="1">
+          <mxGeometry height="60" width="1170" x="15" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="t_order_item" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontSize=13;" value="ORDER_ITEM | &lt;u&gt;OrderItemId&lt;/u&gt; (PK) | Quantity | UnitPrice | &lt;b&gt;&lt;u&gt;OrderId&lt;/u&gt;&lt;/b&gt; (FK) | &lt;b&gt;&lt;u&gt;ProductId&lt;/u&gt;&lt;/b&gt; (FK)" vertex="1">
+          <mxGeometry height="55" width="530" x="335" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="fk_prod_cat" edge="1" parent="1" source="t_product" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.92;exitY=0;exitDx=0;exitDy=0;entryX=0.35;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_category">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk_cart_user" edge="1" parent="1" source="t_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.73;exitY=0;exitDx=0;exitDy=0;entryX=0.18;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_user">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk_cart_prod" edge="1" parent="1" source="t_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.90;exitY=0;exitDx=0;exitDy=0;entryX=0.16;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_product">
+          <mxGeometry relative="1" x="-0.3017" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="355" />
+              <mxPoint x="780" y="335" />
+              <mxPoint x="870" y="335" />
+              <mxPoint x="870" y="220" />
+              <mxPoint x="341.6" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_wish_user" edge="1" parent="1" source="t_wishlist" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.72;exitY=0;exitDx=0;exitDy=0;entryX=0.18;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_user">
+          <mxGeometry relative="1" x="-0.0062" as="geometry">
+            <Array as="points">
+              <mxPoint x="707.8" y="438" />
+              <mxPoint x="305" y="438" />
+              <mxPoint x="305" y="325" />
+              <mxPoint x="452.8" y="325" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_wish_prod" edge="1" parent="1" source="t_wishlist" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.90;exitY=0;exitDx=0;exitDy=0;entryX=0.16;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_product">
+          <mxGeometry relative="1" x="-0.1857" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="460" />
+              <mxPoint x="780" y="438" />
+              <mxPoint x="930" y="438" />
+              <mxPoint x="930" y="220" />
+              <mxPoint x="341.6" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_rev_user" edge="1" parent="1" source="t_review" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.77;exitY=0;exitDx=0;exitDy=0;entryX=0.18;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_user">
+          <mxGeometry relative="1" x="-0.0029" as="geometry">
+            <Array as="points">
+              <mxPoint x="762" y="542" />
+              <mxPoint x="260" y="542" />
+              <mxPoint x="260" y="325" />
+              <mxPoint x="452.8" y="325" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_rev_prod" edge="1" parent="1" source="t_review" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.91;exitY=0;exitDx=0;exitDy=0;entryX=0.16;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_product">
+          <mxGeometry relative="1" x="-0.1377" as="geometry">
+            <Array as="points">
+              <mxPoint x="846" y="542" />
+              <mxPoint x="990" y="542" />
+              <mxPoint x="990" y="220" />
+              <mxPoint x="341.6" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_addr_user" edge="1" parent="1" source="t_address" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.92;exitY=0;exitDx=0;exitDy=0;entryX=0.18;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_user">
+          <mxGeometry relative="1" x="-0.0068" as="geometry">
+            <Array as="points">
+              <mxPoint x="847.8" y="648" />
+              <mxPoint x="215" y="648" />
+              <mxPoint x="215" y="325" />
+              <mxPoint x="452.8" y="325" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_ord_user" edge="1" parent="1" source="t_order" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.74;exitY=0;exitDx=0;exitDy=0;entryX=0.18;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_user">
+          <mxGeometry relative="1" x="-0.0004" as="geometry">
+            <Array as="points">
+              <mxPoint x="880.8" y="850" />
+              <mxPoint x="180" y="850" />
+              <mxPoint x="180" y="325" />
+              <mxPoint x="452.8" y="325" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_ord_addr" edge="1" parent="1" source="t_order" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.83;exitY=0;exitDx=0;exitDy=0;entryX=0.19;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_address">
+          <mxGeometry relative="1" x="-0.0128" as="geometry">
+            <Array as="points">
+              <mxPoint x="986.1" y="870" />
+              <mxPoint x="145" y="870" />
+              <mxPoint x="145" y="745" />
+              <mxPoint x="417.1" y="745" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_ord_disc" edge="1" parent="1" source="t_order" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.94;exitY=0;exitDx=0;exitDy=0;entryX=0.22;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_discount">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1114.8" y="860" />
+              <mxPoint x="401.2" y="860" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fk_oi_ord" edge="1" parent="1" source="t_order_item" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.73;exitY=0;exitDx=0;exitDy=0;entryX=0.11;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_order">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fk_oi_prod" edge="1" parent="1" source="t_order_item" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.90;exitY=0;exitDx=0;exitDy=0;entryX=0.16;entryY=1;entryDx=0;entryDy=0;endArrow=block;endFill=1;" target="t_product">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="816" y="990" />
+              <mxPoint x="816" y="965" />
+              <mxPoint x="1210" y="965" />
+              <mxPoint x="1210" y="220" />
+              <mxPoint x="341.6" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
