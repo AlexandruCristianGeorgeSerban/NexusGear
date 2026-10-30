@@ -1,8 +1,159 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<!-- Hero Section -->
+<section class="py-5 text-center position-relative overflow-hidden" style="background: radial-gradient(circle at 50% 30%, rgba(0, 229, 163, 0.12) 0%, rgba(11, 17, 32, 1) 75%);">
+    <div class="container py-4">
+        <h1 class="display-4 fw-bolder text-white mb-3 tracking-tight">
+            ENGINEER YOUR ULTIMATE <span class="brand-text-accent">DESK SETUP</span>
+        </h1>
+        <p class="hero-subtext">
+            A curated home for high-performance gaming peripherals and ergonomic desk setups. Crafted for precision, responsiveness, and all-day comfort.
+        </p>
+        <div class="d-flex justify-content-center">
+            <a asp-controller="Catalog" asp-action="Index" class="btn btn-mint px-5 py-3 fs-5 shadow">
+                <i class="bi bi-grid-fill me-2"></i> Browse Full Catalog
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Category Showcase Grid -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <span class="text-uppercase fw-bold text-info small letter-spacing-1">Curated Collections</span>
+                <h2 class="text-white fw-bold mb-0">Hardware Categories</h2>
+            </div>
+            <a asp-controller="Catalog" asp-action="Index" class="btn btn-sm btn-outline-mint">
+                All Products <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Keyboards -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a asp-controller="Catalog" asp-action="Index" asp-route-category="mechanical-keyboards" class="text-decoration-none">
+                    <div class="nexus-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background-color: rgba(0, 229, 163, 0.15); color: #00E5A3;">
+                                <i class="bi bi-keyboard fs-2"></i>
+                            </div>
+                            <h4 class="text-white fw-bold fs-5 mb-2">Keyboards</h4>
+                            <p class="card-desc">
+                                60%, 75% &amp; TKL custom mechanical boards with hot-swappable sockets.
+                            </p>
+                        </div>
+                        <div class="mt-4 text-mint fw-semibold small">
+                            8 Products <i class="bi bi-chevron-right ms-1"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Mice -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a asp-controller="Catalog" asp-action="Index" asp-route-category="gaming-mice" class="text-decoration-none">
+                    <div class="nexus-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background-color: rgba(56, 189, 248, 0.15); color: #38BDF8;">
+                                <i class="bi bi-mouse fs-2"></i>
+                            </div>
+                            <h4 class="text-white fw-bold fs-5 mb-2">Gaming Mice</h4>
+                            <p class="card-desc">
+                                Ultralight 42g&ndash;49g wireless shells with 8000Hz polling rate.
+                            </p>
+                        </div>
+                        <div class="mt-4 text-info fw-semibold small">
+                            8 Products <i class="bi bi-chevron-right ms-1"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Deskmats -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a asp-controller="Catalog" asp-action="Index" asp-route-category="deskmats-mousepads" class="text-decoration-none">
+                    <div class="nexus-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background-color: rgba(245, 158, 11, 0.15); color: #F59E0B;">
+                                <i class="bi bi-aspect-ratio fs-2"></i>
+                            </div>
+                            <h4 class="text-white fw-bold fs-5 mb-2">Deskmats</h4>
+                            <p class="card-desc">
+                                900x400mm extended mats, Cordura speed pads, and merino wool felt.
+                            </p>
+                        </div>
+                        <div class="mt-4 text-warning fw-semibold small">
+                            8 Products <i class="bi bi-chevron-right ms-1"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Ergonomic Gaming Chairs -->
+            <div class="col-12 col-sm-6 col-lg-3">
+                <a asp-controller="Catalog" asp-action="Index" asp-route-category="ergonomic-gaming-chairs" class="text-decoration-none">
+                    <div class="nexus-card p-4 h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background-color: rgba(168, 85, 247, 0.15); color: #C084FC;">
+                                <!-- Sleek custom gaming bucket chair icon -->
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M7 3h10a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
+                                    <path d="M6 9h12l-1 8H7L6 9z"></path>
+                                    <rect x="4" y="17" width="16" height="3" rx="1.5"></rect>
+                                    <line x1="12" y1="20" x2="12" y2="22"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </div>
+                            <h4 class="text-white fw-bold fs-5 mb-2">Gaming Chairs</h4>
+                            <p class="card-desc">
+                                Active lumbar support, breathable elastomer mesh, and 4D armrests.
+                            </p>
+                        </div>
+                        <div class="mt-4 fw-semibold small" style="color: #C084FC;">
+                            6 Products <i class="bi bi-chevron-right ms-1"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features / Pillars Section -->
+<section class="py-5" style="background-color: #080D1A; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle);">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-12 col-md-4">
+                <div class="p-3">
+                    <i class="bi bi-shield-check fs-1 text-mint mb-2 d-block"></i>
+                    <h5 class="text-white fw-bold mb-2">Verified Secure Payments</h5>
+                    <p class="card-desc">
+                        Seamless checkout powered by asynchronous Stripe webhook verification for guaranteed order fulfillment.
+                    </p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="p-3">
+                    <i class="bi bi-layers-fill fs-1 text-info mb-2 d-block"></i>
+                    <h5 class="text-white fw-bold mb-2">Real-Time Stock Protection</h5>
+                    <p class="card-desc">
+                        Concurrency-controlled inventory prevents overselling and guarantees every item in your order is reserved.
+                    </p>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="p-3">
+                    <i class="bi bi-phone-fill fs-1 text-warning mb-2 d-block"></i>
+                    <h5 class="text-white fw-bold mb-2">Optimized Mobile Experience</h5>
+                    <p class="card-desc">
+                        Engineered with a responsive mobile-first architecture for an effortless shopping experience on any device.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
