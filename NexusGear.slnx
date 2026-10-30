@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+    <File Path=".gitignore" />
+    <File Path=".env.example" />
+  </Folder>
+  <Project Path="NexusGear/NexusGear.csproj" />
+  <Project Path="NexusGear.Tests/NexusGear.Tests.csproj" />
+</Solution>
+
