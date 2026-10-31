@@ -78,22 +78,22 @@ dotnet run --project NexusGear
 
 ## 🌟 Bonus Features & Ownership (B1–B7)
 
-| Code | Bonus Feature | Primary Owner | Target Stage | Points | Status |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **B1** | **Filtered search** (category, price range, in-stock, sorting, URL preserved) | Popa-Ion Andrei | P3 (Week 11) | 5 pts | Planned |
-| **B2** | **Recommendations** (dynamic "Frequently bought together" and "Similar products") | Popa-Ion Andrei | P3 (Week 11) | 4 pts | Planned |
-| **B3** | **Reviews and ratings** (verified buyers only, avg rating, admin moderation) | Șerban Alexandru-Cristian-George | P3 (Week 10) | 4 pts | Planned |
-| **B4** | **Sales dashboard** (daily sales chart, top 5 products, AOV, time filters) | Șerban Alexandru-Cristian-George | P3 (Week 11) | 3 pts | Planned |
-| **B5** | **Discount codes** (% or fixed amount, expiry date, max uses, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | 3 pts | Planned |
-| **B6** | **Transactional email** (order confirmation via Mailtrap SMTP) | Șerban Alexandru-Cristian-George | P3 (Week 9) | 5 pts | Planned |
-| **B7** | **Wishlist** (favorites for authenticated users, move to cart) | Popa-Ion Andrei | P3 (Week 8) | 2 pts | Planned |
+| Code | Bonus Feature | Primary Owner | Target Stage | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **B1** | **Filtered search** (category, price range, in-stock, sorting, URL preserved) | Popa-Ion Andrei | P3 (Week 11) | Planned |
+| **B2** | **Recommendations** (dynamic "Frequently bought together" and "Similar products") | Popa-Ion Andrei | P3 (Week 11) | Planned |
+| **B3** | **Reviews and ratings** (verified buyers only, avg rating, admin moderation) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Planned |
+| **B4** | **Sales dashboard** (daily sales chart, top 5 products, AOV, time filters) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Planned |
+| **B5** | **Discount codes** (% or fixed amount, expiry date, max uses, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Planned |
+| **B6** | **Transactional email** (order confirmation via Mailtrap SMTP) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Planned |
+| **B7** | **Wishlist** (favorites for authenticated users, move to cart) | Popa-Ion Andrei | P3 (Week 8) | Planned |
 
 ---
 
 ## 👥 The Team
 
-* **Popa-Ion Andrei** ([GitHub](https://github.com/Popa-Ion-Andrei)) — *Frontend Lead & Customer Experience* (UI/UX, Client flows, Responsive design)
-* **Șerban Alexandru-Cristian-George** ([GitHub](https://github.com/AlexandruCristianGeorgeSerban)) — *Backend Lead & System Integrations* (Architecture, SQLite/EF Core, Stripe webhooks, Security)
+* [**Popa-Ion Andrei**](https://github.com/Popa-Ion-Andrei) — *Frontend Lead & Customer Experience* (UI/UX, Client flows, Responsive design)
+* [**Șerban Alexandru-Cristian-George**](https://github.com/AlexandruCristianGeorgeSerban) — *Backend Lead & System Integrations* (Architecture, SQLite/EF Core, Stripe webhooks, Security)
 
 ---
 
