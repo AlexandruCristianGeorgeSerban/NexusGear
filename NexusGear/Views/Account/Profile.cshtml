@@ -153,7 +153,7 @@
                                     <div>
                                         @if (addr.IsDefault)
                                         {
-                                            <span class="badge bg-mint text-dark fw-bold mb-1">
+                                            <span class="badge badge-mint fw-bold mb-1">
                                                 <i class="bi bi-star-fill me-1"></i> Default Shipping Address
                                             </span>
                                         }
@@ -216,7 +216,12 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label-nexus small">Email Address</label>
-                            <input value="@Model.Email" class="form-control form-control-nexus" disabled readonly />
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary border-opacity-50 text-info">
+                                    <i class="bi bi-envelope-fill"></i>
+                                </span>
+                                <input value="@Model.Email" class="form-control form-control-nexus" readonly style="background-color: #070D18; color: #E2E8F0; border-color: var(--border-subtle); cursor: not-allowed;" />
+                            </div>
                             <span class="text-muted small d-block mt-1">Email cannot be modified directly for security reasons.</span>
                         </div>
                         <button type="submit" class="btn btn-tech btn-sm fw-bold">

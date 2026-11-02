@@ -735,3 +735,26 @@ p.lead,
 .breadcrumb-item + .breadcrumb-item::before {
   color: #64748B;
 }
+
+/* High-Contrast Disabled/Readonly Controls & Badges (Popa-Ion Andrei - Frontend Lead) */
+.form-control-nexus:disabled,
+.form-control-nexus[readonly] {
+  background-color: #070D18 !important;
+  color: #E2E8F0 !important;
+  border-color: var(--border-subtle) !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
+.bg-mint,
+.badge-mint,
+.badge.bg-mint {
+  background-color: var(--color-mint) !important;
+  color: #0B1120 !important;
+}
+
+.bg-mint i,
+.badge-mint i,
+.badge.bg-mint i {
+  color: #0B1120 !important;
+}
