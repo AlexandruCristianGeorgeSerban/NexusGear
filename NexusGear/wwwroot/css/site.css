@@ -213,6 +213,11 @@ p.lead,
   border-radius: 10px;
 }
 
+.bg-mint {
+  background-color: var(--color-mint) !important;
+  color: #0B1120 !important;
+}
+
 .badge-blue {
   background-color: var(--color-blue);
   color: #0B1120;
@@ -254,48 +259,83 @@ p.lead,
 .product-image-wrap {
   position: relative;
   background-color: #070D18;
-  padding: 1.25rem;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   aspect-ratio: 4 / 3;
   overflow: hidden;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.product-image-wrap a {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .product-image-wrap img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  transition: transform 0.3s ease;
+  object-fit: cover;
+  transform: scale(1.06);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .product-card:hover .product-image-wrap img {
-  transform: scale(1.04);
+  transform: scale(1.14);
 }
 
-.product-badge-cat {
+.sidebar-sticky-nexus {
+  top: 80px;
+  max-height: calc(100vh - 95px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+}
+
+.product-badges-header {
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
-  background-color: rgba(11, 17, 32, 0.92);
+  right: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.product-badge-cat {
+  position: static;
+  background-color: rgba(11, 17, 32, 0.94);
   border: 1px solid var(--border-subtle);
   color: var(--color-blue);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  padding: 0.28rem 0.65rem;
+  padding: 0.25rem 0.55rem;
   border-radius: 6px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  max-width: 58%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  pointer-events: auto;
 }
 
 .product-stock-tag {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  font-size: 0.72rem;
+  position: static;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 0.28rem 0.6rem;
+  padding: 0.25rem 0.55rem;
   border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  pointer-events: auto;
 }
 
 .stock-in {
@@ -587,11 +627,11 @@ p.lead,
   .navbar-nexus {
     padding: 0.5rem 0;
   }
-  
+
   .navbar-brand-nexus {
     font-size: 1.1rem;
   }
-  
+
   .navbar-brand-nexus .brand-logo {
     height: 30px;
   }
@@ -600,7 +640,7 @@ p.lead,
     max-width: 100%;
     margin-top: 0.6rem;
   }
-  
+
   .btn-icon-nexus span.btn-label {
     display: none;
   }
@@ -637,4 +677,61 @@ p.lead,
   .table-responsive-stack thead {
     display: none;
   }
+}
+
+/* ==============================================================================
+   Catalog & Pagination System (A1, A2, B1)
+   ============================================================================== */
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.35;
+  min-height: 2.7rem;
+}
+
+.pagination-nexus {
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.pagination-nexus .page-item .page-link {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: #CBD5E1;
+  font-weight: 600;
+  border-radius: 8px !important;
+  padding: 0.55rem 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.pagination-nexus .page-item .page-link:hover {
+  background-color: var(--bg-surface);
+  border-color: var(--color-mint);
+  color: var(--color-mint);
+}
+
+.pagination-nexus .page-item.active .page-link {
+  background-color: var(--color-mint);
+  border-color: var(--color-mint);
+  color: #0B1120;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(0, 229, 163, 0.4);
+}
+
+.pagination-nexus .page-item.disabled .page-link {
+  background-color: rgba(11, 17, 32, 0.6);
+  border-color: rgba(51, 65, 85, 0.4);
+  color: #475569;
+  cursor: not-allowed;
+}
+
+.form-check-input:checked {
+  background-color: var(--color-mint);
+  border-color: var(--color-mint);
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  color: #64748B;
 }

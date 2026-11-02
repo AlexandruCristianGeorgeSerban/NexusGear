@@ -1,0 +1,448 @@
+@model NexusGear.ViewModels.CatalogIndexViewModel
+@{
+    ViewData["Title"] = !string.IsNullOrWhiteSpace(Model.SelectedCategoryName)
+        ? $"{Model.SelectedCategoryName} - Catalog"
+        : "Hardware Catalog";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index" class="text-decoration-none text-muted">Catalog</a></li>
+            @if (!string.IsNullOrWhiteSpace(Model.SelectedCategoryName))
+            {
+                <li class="breadcrumb-item active text-mint" aria-current="page">@Model.SelectedCategoryName</li>
+            }
+        </ol>
+    </nav>
+
+    <!-- Catalog Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+        <div>
+            <h1 class="h2 fw-bold text-white mb-1">
+                @(!string.IsNullOrWhiteSpace(Model.SelectedCategoryName) ? Model.SelectedCategoryName : "All Performance Hardware")
+            </h1>
+            <p class="text-muted mb-0 small">
+                Showing @Model.Products.Count of @Model.TotalItems engineering-grade desk peripherals.
+            </p>
+        </div>
+
+        <!-- Mobile Filter Toggle Button (360px+) -->
+        <div class="d-flex d-lg-none gap-2">
+            <button class="btn btn-outline-mint flex-grow-1" type="button" data-bs-toggle="offcanvas" data-bs-target="#catalogFilterOffcanvas" aria-controls="catalogFilterOffcanvas">
+                <i class="bi bi-funnel-fill me-1"></i> Filters &amp; Sorting
+                @if (Model.HasActiveFilters)
+                {
+                    <span class="badge bg-mint text-dark ms-1">Active</span>
+                }
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Desktop Filter Sidebar (A1, B1) -->
+        <aside class="col-lg-3 d-none d-lg-block">
+            <div class="nexus-card-static p-3 position-sticky sidebar-sticky-nexus">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-white fw-bold mb-0 d-flex align-items-center gap-2 fs-6">
+                        <i class="bi bi-funnel text-mint"></i> Hardware Filters
+                    </h5>
+                    @if (Model.HasActiveFilters)
+                    {
+                        <a asp-action="Index" class="badge bg-secondary text-decoration-none text-light small">Reset</a>
+                    }
+                </div>
+
+                <form method="get" asp-action="Index" id="desktopFilterForm">
+                    <!-- Preserve existing search, sort, and pageSize -->
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <input type="hidden" name="searchTerm" value="@Model.SearchTerm" />
+                    }
+                    <!-- 1. Categories Filter (A1) -->
+                    <div class="mb-3">
+                        <label class="form-label-nexus d-block mb-1 small text-uppercase">Category</label>
+                        <div class="list-group list-group-flush rounded-2 overflow-hidden border border-secondary border-opacity-25">
+                            <a asp-action="Index"
+                               asp-route-searchTerm="@Model.SearchTerm"
+                               asp-route-minPrice="@Model.MinPrice"
+                               asp-route-maxPrice="@Model.MaxPrice"
+                               asp-route-inStockOnly="@(Model.InStockOnly ? "true" : null)"
+                               asp-route-sortOrder="@Model.SortOrder"
+                               asp-route-pageSize="@Model.PageSize"
+                               class="list-group-item list-group-item-action bg-dark text-white border-secondary border-opacity-25 d-flex justify-content-between align-items-center py-1.5 px-2.5 small @(string.IsNullOrWhiteSpace(Model.SelectedCategorySlug) ? "active bg-primary border-primary fw-bold" : "")">
+                                <span>All Products</span>
+                                <span class="badge bg-secondary rounded-pill" style="font-size: 0.7rem;">@Model.Categories.Sum(c => c.ProductCount)</span>
+                            </a>
+
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <a asp-action="Index"
+                                   asp-route-category="@cat.Slug"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-inStockOnly="@(Model.InStockOnly ? "true" : null)"
+                                   asp-route-sortOrder="@Model.SortOrder"
+                                   asp-route-pageSize="@Model.PageSize"
+                                   class="list-group-item list-group-item-action bg-dark text-white border-secondary border-opacity-25 d-flex justify-content-between align-items-center py-1.5 px-2.5 small @(cat.IsSelected ? "active bg-primary border-primary fw-bold" : "")">
+                                    <span class="text-truncate me-1">@cat.Name</span>
+                                    <span class="badge bg-secondary rounded-pill" style="font-size: 0.7rem;">@cat.ProductCount</span>
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Preserve category hidden input if submitting the form -->
+                    @if (!string.IsNullOrWhiteSpace(Model.SelectedCategorySlug))
+                    {
+                        <input type="hidden" name="category" value="@Model.SelectedCategorySlug" />
+                    }
+
+                    <!-- 2. Price Range Filter (B1) -->
+                    <div class="mb-3">
+                        <label class="form-label-nexus d-block mb-1 small text-uppercase">Price Range (RON)</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-dark border-secondary text-muted px-2" style="font-size: 0.75rem;">Min</span>
+                                    <input type="number" step="10" min="0" max="5000" class="form-control form-control-nexus py-1 px-2 small" name="minPrice" value="@(Model.MinPrice?.ToString("0"))" placeholder="0" />
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-dark border-secondary text-muted px-2" style="font-size: 0.75rem;">Max</span>
+                                    <input type="number" step="10" min="0" max="5000" class="form-control form-control-nexus py-1 px-2 small" name="maxPrice" value="@(Model.MaxPrice?.ToString("0"))" placeholder="1500" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Stock Availability Filter (B1) -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="inStockCheck" name="inStockOnly" value="true" @(Model.InStockOnly ? "checked" : "") />
+                            <label class="form-check-label text-white small" for="inStockCheck">In-Stock Only</label>
+                        </div>
+                    </div>
+
+                    <!-- 4. Sort Order -->
+                    <div class="mb-3">
+                        <label class="form-label-nexus d-block mb-1 small text-uppercase">Sort By</label>
+                        <select name="sortOrder" class="form-select form-select-nexus form-select-sm py-1">
+                            <option value="popular" selected="@(Model.SortOrder == "popular")">Most Popular</option>
+                            <option value="newest" selected="@(Model.SortOrder == "newest")">Newest Arrivals</option>
+                            <option value="price-asc" selected="@(Model.SortOrder == "price-asc")">Price: Low to High</option>
+                            <option value="price-desc" selected="@(Model.SortOrder == "price-desc")">Price: High to Low</option>
+                            <option value="name-asc" selected="@(Model.SortOrder == "name-asc")">Name (A - Z)</option>
+                        </select>
+                    </div>
+
+                    <!-- 5. Page Size Selector -->
+                    <div class="mb-3">
+                        <label class="form-label-nexus d-block mb-1 small text-uppercase">Items Per Page</label>
+                        <select name="pageSize" class="form-select form-select-nexus form-select-sm py-1">
+                            <option value="6" selected="@(Model.PageSize == 6)">6 items</option>
+                            <option value="12" selected="@(Model.PageSize == 12)">12 items</option>
+                            <option value="24" selected="@(Model.PageSize == 24)">24 items</option>
+                        </select>
+                    </div>
+
+                    <!-- 6. Action Buttons -->
+                    <div class="d-grid gap-2 pt-1">
+                        <button type="submit" class="btn btn-mint btn-sm py-2">
+                            <i class="bi bi-funnel-fill me-1"></i> Apply Filters
+                        </button>
+                        @if (Model.HasActiveFilters)
+                        {
+                            <a asp-action="Index" class="btn btn-tech btn-sm py-1 text-center small">
+                                <i class="bi bi-x-circle me-1"></i> Clear All Filters
+                            </a>
+                        }
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Product Grid & Controls -->
+        <main class="col-lg-9">
+            <!-- Top Controls Toolbar -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 p-3 rounded-3" style="background-color: var(--bg-card); border: 1px solid var(--border-subtle);">
+                <div class="text-muted small">
+                    Showing <strong class="text-white">@Model.Products.Count</strong> of <strong class="text-white">@Model.TotalItems</strong> products
+                </div>
+
+                <!-- Fast Sort Form -->
+                <form method="get" asp-action="Index" class="d-flex align-items-center gap-2" id="quickSortForm">
+                    @if (!string.IsNullOrWhiteSpace(Model.SelectedCategorySlug))
+                    {
+                        <input type="hidden" name="category" value="@Model.SelectedCategorySlug" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <input type="hidden" name="searchTerm" value="@Model.SearchTerm" />
+                    }
+                    @if (Model.MinPrice.HasValue)
+                    {
+                        <input type="hidden" name="minPrice" value="@Model.MinPrice" />
+                    }
+                    @if (Model.MaxPrice.HasValue)
+                    {
+                        <input type="hidden" name="maxPrice" value="@Model.MaxPrice" />
+                    }
+                    @if (Model.InStockOnly)
+                    {
+                        <input type="hidden" name="inStockOnly" value="true" />
+                    }
+                    <input type="hidden" name="pageSize" value="@Model.PageSize" />
+
+                    <label class="small text-muted text-nowrap d-none d-sm-inline">Sort by:</label>
+                    <select name="sortOrder" class="form-select form-select-nexus form-select-sm" onchange="this.form.submit()">
+                        <option value="popular" selected="@(Model.SortOrder == "popular")">Most Popular</option>
+                        <option value="newest" selected="@(Model.SortOrder == "newest")">Newest Arrivals</option>
+                        <option value="price-asc" selected="@(Model.SortOrder == "price-asc")">Price: Low to High</option>
+                        <option value="price-desc" selected="@(Model.SortOrder == "price-desc")">Price: High to Low</option>
+                        <option value="name-asc" selected="@(Model.SortOrder == "name-asc")">Name (A - Z)</option>
+                    </select>
+                </form>
+            </div>
+
+            <!-- Product Cards Grid -->
+            @if (Model.Products.Any())
+            {
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4 mb-5">
+                    @foreach (var product in Model.Products)
+                    {
+                        <div class="col">
+                            <div class="nexus-card product-card">
+                                <!-- Image Preview Container -->
+                                <div class="product-image-wrap">
+                                    <div class="product-badges-header">
+                                        <span class="product-badge-cat text-truncate" title="@product.CategoryName">@product.CategoryName</span>
+                                        <span class="product-stock-tag @(product.StockQuantity == 0 ? "stock-out" : product.StockQuantity <= 5 ? "stock-low" : "stock-in")">
+                                            @product.StockLabel
+                                        </span>
+                                    </div>
+                                    <a asp-action="Details" asp-route-id="@product.ProductId">
+                                        <img src="@product.ImageUrl" alt="@product.Name" loading="lazy" />
+                                    </a>
+                                </div>
+
+                                <!-- Body -->
+                                <div class="product-body">
+                                    <a asp-action="Details" asp-route-id="@product.ProductId" class="text-decoration-none">
+                                        <h3 class="product-title text-truncate-2" title="@product.Name">@product.Name</h3>
+                                    </a>
+
+                                    <!-- Rating Preview (B3) -->
+                                    <div class="d-flex align-items-center gap-1 mb-2">
+                                        <div class="rating-stars">
+                                            @if (product.ReviewCount == 0)
+                                            {
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="bi bi-star text-secondary small"></i>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    if (i <= Math.Round(product.AverageRating))
+                                                    {
+                                                        <i class="bi bi-star-fill text-warning small"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-star text-secondary small"></i>
+                                                    }
+                                                }
+                                            }
+                                        </div>
+                                        <span class="text-muted small ms-1">(@product.ReviewCount)</span>
+                                    </div>
+
+                                    <!-- Price & Actions -->
+                                    <div class="mt-auto pt-3 border-top border-secondary border-opacity-25 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <span class="small text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">Price</span>
+                                            <span class="product-price">@product.Price.ToString("F2") <span class="fs-6 fw-normal text-muted">RON</span></span>
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            <!-- Add to Wishlist Toggle (B7) -->
+                                            <button type="button"
+                                                    class="btn btn-sm btn-tech p-2 btn-wishlist-toggle"
+                                                    data-product-id="@product.ProductId"
+                                                    title="Add to Wishlist">
+                                                <i class="bi bi-heart text-danger"></i>
+                                            </button>
+
+                                            <!-- Add to Cart Action (A3) -->
+                                            @if (product.IsInStock)
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-sm btn-mint p-2 px-3 btn-add-cart"
+                                                        data-product-id="@product.ProductId"
+                                                        title="Add to Cart">
+                                                    <i class="bi bi-cart-plus-fill"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-sm btn-secondary p-2 px-3" disabled title="Out of Stock">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagination Controls (A1) -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="Catalog Page Navigation" class="d-flex justify-content-center my-4">
+                        <ul class="pagination pagination-nexus">
+                            <!-- Previous Page -->
+                            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-all-route-data="@Model.GetRouteData(Model.CurrentPage - 1)"
+                                   aria-label="Previous">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+
+                            <!-- Numbered Pages -->
+                            @for (int p = 1; p <= Model.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" asp-all-route-data="@Model.GetRouteData(p)">@p</a>
+                                </li>
+                            }
+
+                            <!-- Next Page -->
+                            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-all-route-data="@Model.GetRouteData(Model.CurrentPage + 1)"
+                                   aria-label="Next">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <!-- Empty State Feedback (A2) -->
+                <div class="nexus-card-static text-center py-5 px-4 my-4">
+                    <div class="d-inline-flex p-3 rounded-circle mb-3" style="background-color: rgba(56, 189, 248, 0.15); color: #38BDF8;">
+                        <i class="bi bi-search fs-1"></i>
+                    </div>
+                    <h3 class="text-white fw-bold mb-2">No matching gear found</h3>
+                    <p class="text-muted mb-4 mx-auto" style="max-width: 480px;">
+                        @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                        {
+                            <span>We couldn't find any products matching "<strong>@Model.SearchTerm</strong>". Try checking for typos or searching for broader terms like <em>K-75</em>, <em>Wireless</em>, or <em>Deskmat</em>.</span>
+                        }
+                        else
+                        {
+                            <span>No hardware matches your active combination of filters and price range. Try expanding your price limits or unchecking "In-Stock Only".</span>
+                        }
+                    </p>
+                    <a asp-action="Index" class="btn btn-mint px-4 py-2">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Filters
+                    </a>
+                </div>
+            }
+        </main>
+    </div>
+</div>
+
+<!-- Mobile Offcanvas Filter Drawer (A11 Responsive 360px+) -->
+<div class="offcanvas offcanvas-start bg-dark text-white border-secondary" tabindex="-1" id="catalogFilterOffcanvas" aria-labelledby="catalogFilterOffcanvasLabel">
+    <div class="offcanvas-header border-bottom border-secondary">
+        <h5 class="offcanvas-title text-mint fw-bold" id="catalogFilterOffcanvasLabel">
+            <i class="bi bi-funnel me-2"></i> Filters &amp; Sorting
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-4">
+        <form method="get" asp-action="Index">
+            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+            {
+                <div class="mb-3">
+                    <label class="form-label-nexus">Current Search Term</label>
+                    <input type="text" name="searchTerm" class="form-control form-control-nexus" value="@Model.SearchTerm" />
+                </div>
+            }
+
+            <!-- Category Radio Group -->
+            <div class="mb-4">
+                <label class="form-label-nexus">Category</label>
+                <div class="d-flex flex-column gap-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="category" id="mCatAll" value="" @(string.IsNullOrWhiteSpace(Model.SelectedCategorySlug) ? "checked" : "") />
+                        <label class="form-check-label text-white small" for="mCatAll">All Categories</label>
+                    </div>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="category" id="mCat_@cat.CategoryId" value="@cat.Slug" @(cat.IsSelected ? "checked" : "") />
+                            <label class="form-check-label text-white small d-flex justify-content-between" for="mCat_@cat.CategoryId">
+                                <span>@cat.Name</span>
+                                <span class="text-muted">(@cat.ProductCount)</span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Price Range -->
+            <div class="mb-4">
+                <label class="form-label-nexus">Price Range (RON)</label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <input type="number" class="form-control form-control-nexus form-control-sm" name="minPrice" value="@(Model.MinPrice?.ToString("0"))" placeholder="Min" />
+                    </div>
+                    <div class="col-6">
+                        <input type="number" class="form-control form-control-nexus form-control-sm" name="maxPrice" value="@(Model.MaxPrice?.ToString("0"))" placeholder="Max" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- In Stock Switch -->
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="mInStock" name="inStockOnly" value="true" @(Model.InStockOnly ? "checked" : "") />
+                    <label class="form-check-label text-white small" for="mInStock">In-Stock Only</label>
+                </div>
+            </div>
+
+            <!-- Sort Selection -->
+            <div class="mb-4">
+                <label class="form-label-nexus">Sort By</label>
+                <select name="sortOrder" class="form-select form-select-nexus form-select-sm">
+                    <option value="popular" selected="@(Model.SortOrder == "popular")">Most Popular</option>
+                    <option value="newest" selected="@(Model.SortOrder == "newest")">Newest Arrivals</option>
+                    <option value="price-asc" selected="@(Model.SortOrder == "price-asc")">Price: Low to High</option>
+                    <option value="price-desc" selected="@(Model.SortOrder == "price-desc")">Price: High to Low</option>
+                    <option value="name-asc" selected="@(Model.SortOrder == "name-asc")">Name (A - Z)</option>
+                </select>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-mint">
+                    <i class="bi bi-check2-circle me-1"></i> Apply
+                </button>
+                <a asp-action="Index" class="btn btn-tech text-center">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>

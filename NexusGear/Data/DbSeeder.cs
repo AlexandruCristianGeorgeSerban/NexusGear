@@ -64,7 +64,7 @@ public static class DbSeeder
                 Description = "75% exploded layout custom mechanical keyboard with CNC aluminum top frame, sound-dampening silicone gasket mount, hot-swappable Kailh sockets, south-facing RGB, and factory-lubed linear switches.",
                 Price = 189.99m,
                 StockQuantity = 14,
-                ImageUrl = "/images/products/product_1.svg",
+                ImageUrl = "/images/products/Product_1.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-28),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -74,7 +74,7 @@ public static class DbSeeder
                 Description = "60% ultra-compact mechanical keyboard engineered for competitive FPS gamers. Detachable braided USB-C cable, PBT double-shot keycaps, and pre-lubed tactile switches for snappy actuation.",
                 Price = 119.99m,
                 StockQuantity = 18,
-                ImageUrl = "/images/products/product_2.svg",
+                ImageUrl = "/images/products/Product_2.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-25),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -84,7 +84,7 @@ public static class DbSeeder
                 Description = "Classic 87-key TKL layout offering the perfect balance between desk real estate and dedicated function navigation keys. Equipped with dampening foam and south-facing per-key illumination.",
                 Price = 149.99m,
                 StockQuantity = 12,
-                ImageUrl = "/images/products/product_3.svg",
+                ImageUrl = "/images/products/Product_3.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-22),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -94,7 +94,7 @@ public static class DbSeeder
                 Description = "Compact 96% layout retaining full numeric keypad utility with reduced width. Tri-mode connectivity (2.4GHz wireless, Bluetooth 5.2, USB-C) with a massive 4000mAh rechargeable battery.",
                 Price = 179.99m,
                 StockQuantity = 10,
-                ImageUrl = "/images/products/product_4.svg",
+                ImageUrl = "/images/products/Product_4.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-20),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -104,7 +104,7 @@ public static class DbSeeder
                 Description = "Ergonomic split mechanical keyboard designed to prevent wrist fatigue during marathon coding and gaming sessions. Independent tilt angles, magnetic palm rests, and hot-swap PCB sockets.",
                 Price = 229.99m,
                 StockQuantity = 6,
-                ImageUrl = "/images/products/product_5.svg",
+                ImageUrl = "/images/products/Product_5.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-18),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -114,7 +114,7 @@ public static class DbSeeder
                 Description = "Ultra-slim 65% mechanical keyboard featuring Kailh Choc V2 low-profile switches and aircraft-grade aluminum chassis. Effortless portability with whisper-quiet keystroke acoustic tuning.",
                 Price = 139.99m,
                 StockQuantity = 20,
-                ImageUrl = "/images/products/product_6.svg",
+                ImageUrl = "/images/products/Product_6.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-15),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -124,7 +124,7 @@ public static class DbSeeder
                 Description = "80% polycarbonate translucent case keyboard delivering an ethereal underglow diffusion. Hand-tuned screw-in stabilizers and ultra-smooth linear switches with 45g actuation force.",
                 Price = 159.99m,
                 StockQuantity = 16,
-                ImageUrl = "/images/products/product_7.svg",
+                ImageUrl = "/images/products/Product_7.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-12),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -134,7 +134,7 @@ public static class DbSeeder
                 Description = "Collector's edition boutique mechanical keyboard machined from single-block titanium alloy with hand-polished bevels and bespoke artisan novelty keycap. Strictly limited production.",
                 Price = 399.99m,
                 StockQuantity = 1, // Stock = 1 for concurrency and race condition testing (A7)
-                ImageUrl = "/images/products/product_8.svg",
+                ImageUrl = "/images/products/Product_8.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-10),
                 CategoryId = catKeyboards.CategoryId
             },
@@ -146,7 +146,7 @@ public static class DbSeeder
                 Description = "42g honeycomb composite wireless gaming mouse. True 26,000 DPI optical sensor, optical switches rated for 90 million clicks, and virgin PTFE glide skates for frictionless aiming.",
                 Price = 99.99m,
                 StockQuantity = 15,
-                ImageUrl = "/images/products/product_9.svg",
+                ImageUrl = "/images/products/Product_9.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-27),
                 CategoryId = catMice.CategoryId
             },
@@ -156,7 +156,7 @@ public static class DbSeeder
                 Description = "Symmetrical esports mouse featuring flawless 1:1 tracking at 30,000 DPI, zero motion smoothing, and lightweight 49g solid shell construction without perforated holes.",
                 Price = 129.99m,
                 StockQuantity = 22,
-                ImageUrl = "/images/products/product_10.svg",
+                ImageUrl = "/images/products/Product_10.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-24),
                 CategoryId = catMice.CategoryId
             },
@@ -166,7 +166,7 @@ public static class DbSeeder
                 Description = "Breakthrough 8000Hz hyper-polling wireless gaming mouse delivering sub-0.125ms click response time. Includes dedicated OLED wireless transmitter base with battery monitoring.",
                 Price = 149.99m,
                 StockQuantity = 11,
-                ImageUrl = "/images/products/product_11.svg",
+                ImageUrl = "/images/products/Product_11.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-21),
                 CategoryId = catMice.CategoryId
             },
@@ -176,7 +176,7 @@ public static class DbSeeder
                 Description = "Right-handed palm grip ergonomic mouse featuring an integrated textured thumb rest, dual side scroll wheel, and whisper-silent secondary buttons for hybrid office and gaming setups.",
                 Price = 89.99m,
                 StockQuantity = 19,
-                ImageUrl = "/images/products/product_12.svg",
+                ImageUrl = "/images/products/Product_12.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-19),
                 CategoryId = catMice.CategoryId
             },
@@ -186,7 +186,7 @@ public static class DbSeeder
                 Description = "12-button side grid programmable MMO/productivity mouse. Mechanical microswitch tactile feedback, onboard hardware profile memory, and ergonomic ring-finger support rest.",
                 Price = 79.99m,
                 StockQuantity = 13,
-                ImageUrl = "/images/products/product_13.svg",
+                ImageUrl = "/images/products/Product_13.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-16),
                 CategoryId = catMice.CategoryId
             },
@@ -196,7 +196,7 @@ public static class DbSeeder
                 Description = "Forged carbon fiber composite structural frame weighing only 39g. Magnetic charging cradle included, with custom low-friction sensor ring glide for ultimate flick speed.",
                 Price = 169.99m,
                 StockQuantity = 8,
-                ImageUrl = "/images/products/product_14.svg",
+                ImageUrl = "/images/products/Product_14.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-13),
                 CategoryId = catMice.CategoryId
             },
@@ -206,7 +206,7 @@ public static class DbSeeder
                 Description = "Ultra-flexible paracord wired mouse with zero cable drag. High-grade PixArt optical sensor, 58g lightweight build, and vibrant 360-degree bottom RGB halo lighting.",
                 Price = 49.99m,
                 StockQuantity = 25,
-                ImageUrl = "/images/products/product_15.svg",
+                ImageUrl = "/images/products/Product_15.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-10),
                 CategoryId = catMice.CategoryId
             },
@@ -216,7 +216,7 @@ public static class DbSeeder
                 Description = "Innovative modular mouse allowing toolless hot-swapping of primary click switches and interchanging high-hump vs low-profile magnetic top covers for personalized grip styles.",
                 Price = 119.99m,
                 StockQuantity = 14,
-                ImageUrl = "/images/products/product_16.svg",
+                ImageUrl = "/images/products/Product_16.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-7),
                 CategoryId = catMice.CategoryId
             },
@@ -228,7 +228,7 @@ public static class DbSeeder
                 Description = "Extended 900x400x4mm micro-woven cloth deskmat. High-density edge stitching prevents fraying, paired with high-grip textured natural rubber base and futuristic cyber line art.",
                 Price = 34.99m,
                 StockQuantity = 25,
-                ImageUrl = "/images/products/product_17.svg",
+                ImageUrl = "/images/products/Product_17.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-26),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -238,7 +238,7 @@ public static class DbSeeder
                 Description = "Crafted from 100% natural 4mm high-density merino wool felt. Provides a soft, warm acoustic dampener for your desk while elevating your keyboard's acoustic sound profile.",
                 Price = 44.99m,
                 StockQuantity = 17,
-                ImageUrl = "/images/products/product_18.svg",
+                ImageUrl = "/images/products/Product_18.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-23),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -248,7 +248,7 @@ public static class DbSeeder
                 Description = "Engineered with water-resistant Cordura textile weave for lightning-fast horizontal glides and micro-stopping control. Resists liquid spills and dust accumulation effortlessly.",
                 Price = 39.99m,
                 StockQuantity = 20,
-                ImageUrl = "/images/products/product_19.svg",
+                ImageUrl = "/images/products/Product_19.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-20),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -258,7 +258,7 @@ public static class DbSeeder
                 Description = "Premium 480x400mm tempered aluminosilicate glass mouse surface. CNC rounded edges, micro-etched low-friction glide, and full silicone underlayer for unshakeable stability.",
                 Price = 89.99m,
                 StockQuantity = 9,
-                ImageUrl = "/images/products/product_20.svg",
+                ImageUrl = "/images/products/Product_20.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-17),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -268,7 +268,7 @@ public static class DbSeeder
                 Description = "Extra-large 900x400mm deskmat with 360-degree stitched RGB optical light tubing. 14 addressable lighting modes with physical selector button and water-repellent surface finish.",
                 Price = 49.99m,
                 StockQuantity = 18,
-                ImageUrl = "/images/products/product_21.svg",
+                ImageUrl = "/images/products/Product_21.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-14),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -278,7 +278,7 @@ public static class DbSeeder
                 Description = "Topographic elevation contour design printed on premium micro-knit fabric. Optimized for low-DPI precision aiming with uniform friction characteristics across X and Y axes.",
                 Price = 36.99m,
                 StockQuantity = 24,
-                ImageUrl = "/images/products/product_22.svg",
+                ImageUrl = "/images/products/Product_22.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-11),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -288,7 +288,7 @@ public static class DbSeeder
                 Description = "Tournament-grade 490x420mm pad backed by authentic Japanese Poron foam. Remarkable suction effect on any desk surface and unmatched tactile stopping power for tactical shooters.",
                 Price = 59.99m,
                 StockQuantity = 12,
-                ImageUrl = "/images/products/product_23.svg",
+                ImageUrl = "/images/products/Product_23.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-8),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -298,7 +298,7 @@ public static class DbSeeder
                 Description = "Double-sided premium PU leather deskmat. Water-resistant, oil-proof, and easy to wipe clean with a damp cloth. Perfect backdrop for minimalist mechanical keyboards.",
                 Price = 29.99m,
                 StockQuantity = 22,
-                ImageUrl = "/images/products/product_24.svg",
+                ImageUrl = "/images/products/Product_24.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-5),
                 CategoryId = catDeskmats.CategoryId
             },
@@ -310,7 +310,7 @@ public static class DbSeeder
                 Description = "Full-body Korean high-tensile elastomer mesh ergonomic chair. Self-adjusting dynamic lumbar support, 4D multi-directional armrests, and 135-degree recline with multi-position lock.",
                 Price = 449.99m,
                 StockQuantity = 7,
-                ImageUrl = "/images/products/product_25.svg",
+                ImageUrl = "/images/products/Product_25.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-27),
                 CategoryId = catChairs.CategoryId
             },
@@ -320,7 +320,7 @@ public static class DbSeeder
                 Description = "Premium high-density cold-cured foam cushioning wrapped in breathable hybrid leatherette. Includes magnetic memory foam headrest pillow and reinforced heavy-duty aluminum wheelbase.",
                 Price = 399.99m,
                 StockQuantity = 9,
-                ImageUrl = "/images/products/product_26.svg",
+                ImageUrl = "/images/products/Product_26.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-22),
                 CategoryId = catChairs.CategoryId
             },
@@ -330,7 +330,7 @@ public static class DbSeeder
                 Description = "Engineered with an internal multi-axis mechanical lumbar dial that allows fine-tuning depth and curvature. Relieves spinal compression during extended 10+ hour workstation sessions.",
                 Price = 479.99m,
                 StockQuantity = 5,
-                ImageUrl = "/images/products/product_27.svg",
+                ImageUrl = "/images/products/Product_27.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-18),
                 CategoryId = catChairs.CategoryId
             },
@@ -340,7 +340,7 @@ public static class DbSeeder
                 Description = "Custom multi-layer breathable fabric weave engineered for maximum airflow and cooling. Resistant to pilling and static electricity, equipped with Class-4 heavy gas lift cylinder.",
                 Price = 429.99m,
                 StockQuantity = 8,
-                ImageUrl = "/images/products/product_28.svg",
+                ImageUrl = "/images/products/Product_28.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-14),
                 CategoryId = catChairs.CategoryId
             },
@@ -350,7 +350,7 @@ public static class DbSeeder
                 Description = "Streamlined ergonomic task chair suited for compact desk setups. Synchronous tilt mechanism, 3D flip-up armrests, and breathable dual-layer mesh backrest.",
                 Price = 289.99m,
                 StockQuantity = 12,
-                ImageUrl = "/images/products/product_29.svg",
+                ImageUrl = "/images/products/Product_29.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-9),
                 CategoryId = catChairs.CategoryId
             },
@@ -360,7 +360,7 @@ public static class DbSeeder
                 Description = "Motorsport-inspired ergonomic gaming chair featuring carbon fiber accent panels, cold-molded lumbar bolsters, and 165-degree full reclining mechanism for post-match relaxation.",
                 Price = 369.99m,
                 StockQuantity = 10,
-                ImageUrl = "/images/products/product_30.svg",
+                ImageUrl = "/images/products/Product_30.png",
                 CreatedAt = DateTime.UtcNow.AddDays(-4),
                 CategoryId = catChairs.CategoryId
             }

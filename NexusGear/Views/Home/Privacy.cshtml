@@ -1,6 +1,194 @@
-﻿@{
+@{
     ViewData["Title"] = "Privacy Policy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">Privacy Policy</li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="pb-4 mb-4 border-bottom border-secondary border-opacity-25">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill bg-dark border border-secondary border-opacity-50">
+            <i class="bi bi-shield-check text-mint"></i>
+            <span class="text-white-50 small text-uppercase fw-semibold letter-spacing-1">Data Protection &amp; GDPR</span>
+        </div>
+        <h1 class="display-6 fw-bold text-white mb-2">Privacy &amp; Security Policy</h1>
+        <p class="text-muted mb-0 lead fs-6">
+            NexusGear is engineered with a strict privacy-first philosophy. This policy transparently outlines how we safeguard your personal information, handle authentication, and protect payment data across our high-performance peripherals platform.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- 1. Information Collection -->
+            <div class="nexus-card-static p-4 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-3 bg-dark border border-secondary border-opacity-50 p-2 text-mint">
+                        <i class="bi bi-person-lines-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white fw-bold mb-1">1. Information We Collect</h4>
+                        <span class="text-muted small">Purpose-driven and minimized data collection</span>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    When you create an account, configure desk hardware, or place an order, we collect only the essential information necessary to provide an uncompromising shopping experience:
+                </p>
+                <ul class="text-muted small mb-0 ps-3">
+                    <li class="mb-2"><strong class="text-white">Account Credentials:</strong> Full name, verified email address, and passwords securely hashed using one-way salted <span class="badge bg-dark border border-info text-info">BCrypt</span> algorithms.</li>
+                    <li class="mb-2"><strong class="text-white">Shipping &amp; Billing Data:</strong> Recipient name, street address, city, postal code, and phone number for delivery routing.</li>
+                    <li class="mb-2"><strong class="text-white">Order &amp; Cart State:</strong> Items added to cart, saved wishlists, applied discount codes, and past order history.</li>
+                    <li class="mb-0"><strong class="text-white">Session Telemetry:</strong> Essential technical cookies enabling secure login sessions and cart persistence.</li>
+                </ul>
+            </div>
+
+            <!-- 2. Payment Security & Stripe -->
+            <div class="nexus-card-static p-4 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-3 bg-dark border border-secondary border-opacity-50 p-2 text-warning">
+                        <i class="bi bi-credit-card-2-front-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white fw-bold mb-1">2. Payment Security &amp; Zero Raw Storage</h4>
+                        <span class="text-muted small">PCI-DSS compliant payment processing</span>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    Your financial safety is paramount. NexusGear uses the industry-standard <strong class="text-white">Stripe Payment Gateway</strong> in sandbox/test mode:
+                </p>
+                <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 mb-3">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-lock-fill text-mint fs-5 mt-0.5"></i>
+                        <p class="text-muted small mb-0">
+                            <strong class="text-white">Zero Card Data Retention:</strong> NexusGear servers <span class="text-danger fw-bold">never</span> receive, inspect, or store credit card numbers, CVVs, or expiration dates. All payment transactions are encrypted and tokenized directly via Stripe Checkout client sessions and verified through signed cryptographic server webhooks (<code class="text-mint">checkout.session.completed</code>).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. How We Use Data -->
+            <div class="nexus-card-static p-4 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-3 bg-dark border border-secondary border-opacity-50 p-2 text-info">
+                        <i class="bi bi-gear-wide-connected fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white fw-bold mb-1">3. How Your Data Is Utilized</h4>
+                        <span class="text-muted small">Operational excellence and order dispatch</span>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 h-100">
+                            <h6 class="text-white fw-bold mb-2"><i class="bi bi-box-seam text-mint me-1"></i> Order Fulfillment</h6>
+                            <p class="text-muted small mb-0">Processing orders, deducting warehouse stock in real-time, and generating shipping manifests.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 h-100">
+                            <h6 class="text-white fw-bold mb-2"><i class="bi bi-envelope-check text-mint me-1"></i> Transactional Emails</h6>
+                            <p class="text-muted small mb-0">Sending order receipts, dispatch updates, and delivery confirmations via transactional SMTP.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 h-100">
+                            <h6 class="text-white fw-bold mb-2"><i class="bi bi-chat-square-quote text-mint me-1"></i> Verified Reviews</h6>
+                            <p class="text-muted small mb-0">Verifying customer purchase status prior to publishing ratings and community hardware feedback.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 h-100">
+                            <h6 class="text-white fw-bold mb-2"><i class="bi bi-shield-lock text-mint me-1"></i> Anti-Fraud &amp; Integrity</h6>
+                            <p class="text-muted small mb-0">Preventing unauthorized access attempts, brute-force login attacks, and duplicate coupon redemptions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. GDPR Rights -->
+            <div class="nexus-card-static p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-3 bg-dark border border-secondary border-opacity-50 p-2 text-mint">
+                        <i class="bi bi-patch-check-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white fw-bold mb-1">4. Your Rights Under GDPR</h4>
+                        <span class="text-muted small">Full control over your personal footprint</span>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">
+                    In compliance with the General Data Protection Regulation (Regulation (EU) 2016/679), all NexusGear customers retain the following fundamental rights:
+                </p>
+                <div class="list-group list-group-flush rounded-2 overflow-hidden border border-secondary border-opacity-25">
+                    <div class="list-group-item bg-dark text-white border-secondary border-opacity-25 p-3">
+                        <h6 class="fw-bold text-mint mb-1">Right of Access &amp; Portability</h6>
+                        <p class="text-muted small mb-0">Inspect all personal data, address book entries, and historical orders stored on your customer dashboard.</p>
+                    </div>
+                    <div class="list-group-item bg-dark text-white border-secondary border-opacity-25 p-3">
+                        <h6 class="fw-bold text-mint mb-1">Right to Rectification</h6>
+                        <p class="text-muted small mb-0">Update profile details, addresses, and delivery preferences at any time through your Profile settings.</p>
+                    </div>
+                    <div class="list-group-item bg-dark text-white border-secondary border-opacity-25 p-3">
+                        <h6 class="fw-bold text-mint mb-1">Right to Erasure ("Right to Be Forgotten")</h6>
+                        <p class="text-muted small mb-0">Request account deactivation and removal of identifiable customer records, subject to legal fiscal retention rules.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Summary / Contact -->
+        <div class="col-lg-4">
+            <div class="nexus-card-static p-4 mb-4 position-sticky" style="top: 90px;">
+                <h5 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle text-info"></i> Fast Summary
+                </h5>
+                <ul class="list-unstyled text-muted small mb-4">
+                    <li class="d-flex align-items-center gap-2 py-2 border-bottom border-secondary border-opacity-25">
+                        <i class="bi bi-check2-circle text-mint fs-5"></i>
+                        <span>Zero third-party marketing tracking</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 py-2 border-bottom border-secondary border-opacity-25">
+                        <i class="bi bi-check2-circle text-mint fs-5"></i>
+                        <span>BCrypt salted password hashing</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 py-2 border-bottom border-secondary border-opacity-25">
+                        <i class="bi bi-check2-circle text-mint fs-5"></i>
+                        <span>Stripe-hosted checkout sessions</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 py-2 border-bottom border-secondary border-opacity-25">
+                        <i class="bi bi-check2-circle text-mint fs-5"></i>
+                        <span>CSRF &amp; XSS antiforgery protection</span>
+                    </li>
+                    <li class="d-flex align-items-center gap-2 py-2">
+                        <i class="bi bi-check2-circle text-mint fs-5"></i>
+                        <span>Compliant with EU GDPR standards</span>
+                    </li>
+                </ul>
+
+                <h6 class="text-white fw-bold mb-2">Project Governance</h6>
+                <p class="text-muted small mb-3">
+                    NexusGear is developed as an academic e-commerce reference application for the Faculty of Automation, Computers and Electronics, University of Craiova (2026&ndash;2027).
+                </p>
+
+                <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-50">
+                    <span class="text-white-50 small d-block mb-1">Have questions or inquiries?</span>
+                    <a href="mailto:support@nexusgear.ro" class="text-mint fw-bold text-decoration-none small d-flex align-items-center gap-2">
+                        <i class="bi bi-envelope-at"></i> support@nexusgear.ro
+                    </a>
+                </div>
+
+                <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 text-center">
+                    <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-mint w-100 btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Hardware Catalog
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
