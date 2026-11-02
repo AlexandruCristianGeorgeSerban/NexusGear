@@ -131,6 +131,12 @@ public class ProductDetailsViewModel
     };
     public List<ReviewItemViewModel> Reviews { get; set; } = new();
 
+    // B3 Verified Buyer Gate
+    public bool IsUserAuthenticated { get; set; }
+    public bool CanUserReview { get; set; }
+    public bool HasUserReviewed { get; set; }
+    public ReviewItemViewModel? CurrentUserReview { get; set; }
+
     // Stock Helpers
     public bool IsInStock => StockQuantity > 0;
     public bool IsLowStock => StockQuantity > 0 && StockQuantity <= 5;
