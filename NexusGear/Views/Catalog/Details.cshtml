@@ -1,0 +1,475 @@
+@model NexusGear.ViewModels.ProductDetailsViewModel
+@{
+    ViewData["Title"] = $"{Model.Name} - NexusGear";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index" class="text-decoration-none text-muted">Catalog</a></li>
+            <li class="breadcrumb-item">
+                <a asp-controller="Catalog" asp-action="Index" asp-route-category="@Model.CategorySlug" class="text-decoration-none text-muted">
+                    @Model.CategoryName
+                </a>
+            </li>
+            <li class="breadcrumb-item active text-mint text-truncate" style="max-width: 250px;" aria-current="page">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <!-- Product Showcase Main Section -->
+    <div class="row g-4 g-lg-5 mb-5">
+        <!-- Left: Product Image Display -->
+        <div class="col-12 col-lg-6">
+            <div class="nexus-card-static p-0 position-relative overflow-hidden text-center" style="background: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.7) 0%, rgba(11, 17, 32, 1) 90%); border-radius: 16px;">
+                <!-- Badges Header -->
+                <div class="d-flex justify-content-between align-items-center w-100 position-absolute top-0 start-0 p-3" style="z-index: 10;">
+                    <span class="badge bg-dark border border-secondary text-info text-uppercase px-3 py-2">@Model.CategoryName</span>
+                    <span class="product-stock-tag @Model.StockBadgeClass position-static">
+                        @if (Model.StockQuantity == 0)
+                        {
+                            <i class="bi bi-x-circle me-1"></i><span>Out of Stock</span>
+                        }
+                        else if (Model.IsLowStock)
+                        {
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i><span>Only @Model.StockQuantity Left!</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-check-circle-fill me-1"></i><span>In Stock (@Model.StockQuantity)</span>
+                        }
+                    </span>
+                </div>
+
+                <!-- Main Product Image -->
+                <div class="overflow-hidden" style="border-radius: 16px;">
+                    <img src="@Model.ImageUrl" alt="@Model.Name" class="img-fluid w-100" style="max-height: 480px; object-fit: cover; transform: scale(1.03); transition: transform 0.35s ease;" />
+                </div>
+
+                <div class="d-flex justify-content-center gap-2 py-3 border-top border-secondary border-opacity-25 bg-dark bg-opacity-50">
+                    <span class="small text-muted"><i class="bi bi-shield-check text-mint me-1"></i> 100% Original NexusGear Hardware</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Details, Pricing & Purchase Actions -->
+        <div class="col-12 col-lg-6 d-flex flex-column justify-content-between">
+            <div>
+                <!-- SKU & Category Subheader -->
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-secondary text-white font-monospace small">SKU: NX-@Model.ProductId.ToString("D4")</span>
+                    <span class="text-muted small">&bull;</span>
+                    <span class="text-info small fw-semibold">@Model.CategoryName</span>
+                </div>
+
+                <!-- Product Title -->
+                <h1 class="h2 text-white fw-bold mb-3 tracking-tight">@Model.Name</h1>
+
+                <!-- Rating Preview & Jump to Reviews -->
+                <div class="d-flex align-items-center gap-2 mb-4">
+                    <div class="rating-stars">
+                        @if (Model.ReviewCount == 0)
+                        {
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="bi bi-star text-secondary"></i>
+                            }
+                        }
+                        else
+                        {
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Round(Model.AverageRating))
+                                {
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star text-secondary"></i>
+                                }
+                            }
+                        }
+                    </div>
+                    @if (Model.ReviewCount > 0)
+                    {
+                        <span class="text-white fw-bold">@Model.AverageRating.ToString("F1")</span>
+                        <span class="text-muted small">&bull;</span>
+                        <a href="#reviews" class="text-mint text-decoration-none small">
+                            @Model.ReviewCount @(Model.ReviewCount == 1 ? "customer review" : "customer reviews")
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">No customer reviews yet</span>
+                    }
+                </div>
+
+                <!-- Price Display -->
+                <div class="p-3 rounded-3 mb-4 d-flex align-items-baseline gap-2" style="background-color: var(--bg-card); border: 1px solid var(--border-subtle);">
+                    <span class="display-6 fw-bold text-mint">@Model.Price.ToString("F2")</span>
+                    <span class="fs-5 text-muted fw-semibold">RON</span>
+                    <span class="text-muted small ms-auto align-self-center">VAT included</span>
+                </div>
+
+                <!-- Low Stock Alert Banner (A7 Concurrency testing preview) -->
+                @if (Model.IsLowStock)
+                {
+                    <div class="nexus-alert nexus-alert-danger mb-4 py-2 px-3 small">
+                        <i class="bi bi-lightning-charge-fill fs-5 text-warning"></i>
+                        <div>
+                            <strong>High Demand!</strong> Only <strong>@Model.StockQuantity</strong> item(s) left in our Craiova fulfillment warehouse.
+                        </div>
+                    </div>
+                }
+
+                <!-- Short / Medium Description -->
+                <p class="text-light lead fs-6 mb-4" style="line-height: 1.7;">
+                    @Model.Description
+                </p>
+
+                <!-- Add to Cart Form (A3) -->
+                <div class="p-4 rounded-3 mb-4" style="background-color: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-4 col-sm-3">
+                            <label class="form-label-nexus small mb-1">Quantity</label>
+                            <div class="input-group input-group-sm">
+                                <button class="btn btn-outline-secondary" type="button" onclick="decrementQty()" @(Model.StockQuantity == 0 ? "disabled" : "")>-</button>
+                                <input type="number" id="purchaseQty" class="form-control form-control-nexus text-center px-1" value="1" min="1" max="@(Math.Min(Model.StockQuantity, 10))" @(Model.StockQuantity == 0 ? "disabled" : "") readonly />
+                                <button class="btn btn-outline-secondary" type="button" onclick="incrementQty(@(Math.Min(Model.StockQuantity, 10)))" @(Model.StockQuantity == 0 ? "disabled" : "")>+</button>
+                            </div>
+                        </div>
+
+                        <div class="col-8 col-sm-6">
+                            <label class="form-label-nexus small mb-1 d-none d-sm-block">&nbsp;</label>
+                            @if (Model.IsInStock)
+                            {
+                                <button type="button" class="btn btn-mint w-100 py-2 btn-add-cart" data-product-id="@Model.ProductId">
+                                    <i class="bi bi-cart-plus-fill me-1"></i> Add to Cart
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary w-100 py-2" disabled>
+                                    <i class="bi bi-x-circle me-1"></i> Out of Stock
+                                </button>
+                            }
+                        </div>
+
+                        <div class="col-12 col-sm-3">
+                            <label class="form-label-nexus small mb-1 d-none d-sm-block">&nbsp;</label>
+                            <button type="button" class="btn btn-tech w-100 py-2 btn-wishlist-toggle" data-product-id="@Model.ProductId" title="Save to Wishlist">
+                                <i class="bi bi-heart text-danger me-1"></i> Wishlist
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="row g-2 border-top border-secondary border-opacity-25 pt-3">
+                <div class="col-6 col-sm-4">
+                    <div class="d-flex align-items-center gap-2 text-muted small">
+                        <i class="bi bi-truck text-mint fs-5"></i>
+                        <span>Free shipping &gt; 250 RON</span>
+                    </div>
+                </div>
+                <div class="col-6 col-sm-4">
+                    <div class="d-flex align-items-center gap-2 text-muted small">
+                        <i class="bi bi-shield-check text-info fs-5"></i>
+                        <span>2-Year Warranty</span>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-4">
+                    <div class="d-flex align-items-center gap-2 text-muted small">
+                        <i class="bi bi-arrow-repeat text-warning fs-5"></i>
+                        <span>14-Day Free Returns</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Specifications Matrix -->
+    <div class="nexus-card-static p-4 p-md-5 mb-5">
+        <h3 class="h4 text-white fw-bold mb-4 d-flex align-items-center gap-2">
+            <i class="bi bi-cpu text-info"></i> Technical Specifications
+        </h3>
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            @foreach (var spec in Model.Specifications)
+            {
+                <div class="col">
+                    <div class="p-3 rounded-2 d-flex justify-content-between align-items-center" style="background-color: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                        <span class="text-muted small fw-semibold">@spec.Key</span>
+                        <span class="text-white text-end fw-bold small">@spec.Value</span>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- B2 Recommendations: Frequently Bought Together (Dynamic OrderItem Co-Occurrence) -->
+    @if (Model.FrequentlyBoughtTogether.Any())
+    {
+        <div class="nexus-card-static p-4 p-md-5 mb-5" style="border-color: rgba(0, 229, 163, 0.3);">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <div>
+                    <span class="badge badge-mint text-dark text-uppercase fw-bold px-3 py-1 mb-2 d-inline-block shadow-sm">
+                        <i class="bi bi-stars me-1"></i> Smart Hardware Bundle
+                    </span>
+                    <h3 class="h4 text-white fw-bold mb-1">
+                        <i class="bi bi-diagram-3-fill text-mint me-2"></i> Frequently Bought Together
+                    </h3>
+                    <p class="text-muted small mb-0">Hardware frequently paired in real customer orders for high performance synergy.</p>
+                </div>
+
+                <div class="text-md-end">
+                    <div class="text-muted small">Bundle Total:</div>
+                    <div class="fs-4 fw-bold text-mint">
+                        @Model.BundleTotalPrice.ToString("F2") <span class="fs-6 text-muted">RON</span>
+                    </div>
+                    <span class="badge bg-success small">Save @Model.BundleSavings.ToString("F2") RON (5% Bundle Discount)</span>
+                </div>
+            </div>
+
+            <!-- Bundle Products Row (Clean single horizontal row with distinct categories) -->
+            <div class="row g-3 align-items-center justify-content-between">
+                <!-- Current Product -->
+                <div class="col-12 col-lg-3">
+                    <div class="p-3 rounded-3 d-flex align-items-center gap-3 h-100" style="background-color: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                        <img src="@Model.ImageUrl" alt="@Model.Name" style="width: 65px; height: 65px; object-fit: cover; border-radius: 8px;" />
+                        <div class="flex-grow-1 overflow-hidden">
+                            <span class="badge bg-dark border border-secondary text-info small mb-1">This Item</span>
+                            <h6 class="text-white fw-bold mb-1 text-truncate" title="@Model.Name">@Model.Name</h6>
+                            <span class="text-mint fw-semibold small">@Model.Price.ToString("F2") RON</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complementary Products from Distinct Categories -->
+                @foreach (var rec in Model.FrequentlyBoughtTogether)
+                {
+                    <div class="col-12 col-lg-auto text-center text-mint fs-3 fw-bold my-1 my-lg-0">+</div>
+
+                    <div class="col-12 col-lg-4">
+                        <div class="p-3 rounded-3 d-flex align-items-center gap-3 h-100" style="background-color: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                            <img src="@rec.ImageUrl" alt="@rec.Name" style="width: 65px; height: 65px; object-fit: cover; border-radius: 8px;" />
+                            <div class="flex-grow-1 overflow-hidden">
+                                <span class="badge bg-dark border border-secondary text-muted small mb-1">@rec.CategoryName</span>
+                                <h6 class="text-white fw-bold mb-1 text-truncate" title="@rec.Name">
+                                    <a asp-action="Details" asp-route-id="@rec.ProductId" class="text-white text-decoration-none">@rec.Name</a>
+                                </h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-mint fw-semibold small">@rec.Price.ToString("F2") RON</span>
+                                    <button type="button" class="btn btn-sm btn-outline-mint py-1 px-2 btn-add-cart" data-product-id="@rec.ProductId">
+                                        <i class="bi bi-cart-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- B2 Recommendations: Similar Products (Same Category) -->
+    @if (Model.SimilarProducts.Any())
+    {
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h4 text-white fw-bold mb-0">
+                    <i class="bi bi-collection-fill text-info me-2"></i> Similar in @Model.CategoryName
+                </h3>
+                <a asp-action="Index" asp-route-category="@Model.CategorySlug" class="btn btn-sm btn-outline-mint">
+                    View Category <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+                @foreach (var sim in Model.SimilarProducts)
+                {
+                    <div class="col">
+                        <div class="nexus-card product-card h-100">
+                            <div class="product-image-wrap">
+                                <div class="product-badges-header">
+                                    <span class="product-badge-cat text-truncate" title="@sim.CategoryName">@sim.CategoryName</span>
+                                    <span class="product-stock-tag @(sim.StockQuantity == 0 ? "stock-out" : sim.StockQuantity <= 5 ? "stock-low" : "stock-in")">
+                                        @sim.StockLabel
+                                    </span>
+                                </div>
+                                <a asp-action="Details" asp-route-id="@sim.ProductId">
+                                    <img src="@sim.ImageUrl" alt="@sim.Name" loading="lazy" />
+                                </a>
+                            </div>
+                            <div class="product-body p-3">
+                                <a asp-action="Details" asp-route-id="@sim.ProductId" class="text-decoration-none">
+                                    <h4 class="product-title fs-6 text-truncate-2 mb-2" title="@sim.Name">@sim.Name</h4>
+                                </a>
+
+                                <div class="d-flex align-items-center gap-1 mb-2">
+                                    <div class="rating-stars">
+                                        @if (sim.ReviewCount == 0)
+                                        {
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi bi-star text-secondary small"></i>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= Math.Round(sim.AverageRating))
+                                                {
+                                                    <i class="bi bi-star-fill text-warning small"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-star text-secondary small"></i>
+                                                }
+                                            }
+                                        }
+                                    </div>
+                                    <span class="text-muted small ms-1">(@sim.ReviewCount)</span>
+                                </div>
+
+                                <div class="mt-auto pt-2 d-flex justify-content-between align-items-center border-top border-secondary border-opacity-25">
+                                    <span class="product-price fs-6">@sim.Price.ToString("F2") <span class="small fw-normal text-muted">RON</span></span>
+                                    <a asp-action="Details" asp-route-id="@sim.ProductId" class="btn btn-sm btn-tech py-1 px-2">
+                                        Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Customer Reviews & Ratings Section (B3) -->
+    <div class="nexus-card-static p-4 p-md-5" id="reviews">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+            <div>
+                <h3 class="h4 text-white fw-bold mb-1">
+                    <i class="bi bi-chat-square-quote-fill text-warning me-2"></i> Verified Customer Reviews
+                </h3>
+                <p class="text-muted small mb-0">Feedback submitted by verified purchasers who ordered this hardware.</p>
+            </div>
+
+            <div class="text-md-end">
+                <span class="badge bg-dark border border-secondary text-info px-3 py-2">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Verified Buyers Only
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <!-- Left: Aggregate Rating Box -->
+            <div class="col-12 col-md-4 text-center border-md-end border-secondary border-opacity-25 pe-md-4">
+                <div class="display-3 fw-bold text-white mb-2">@Model.AverageRating.ToString("F1")</div>
+                <div class="rating-stars fs-5 mb-2">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (Model.ReviewCount > 0 && i <= Math.Round(Model.AverageRating))
+                        {
+                            <i class="bi bi-star-fill text-warning"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-star text-secondary"></i>
+                        }
+                    }
+                </div>
+                <p class="text-muted small mb-0">Based on @Model.ReviewCount customer reviews</p>
+            </div>
+
+            <!-- Right: 5-Star Breakdown Bar -->
+            <div class="col-12 col-md-8">
+                @for (int star = 5; star >= 1; star--)
+                {
+                    var count = Model.RatingCounts.ContainsKey(star) ? Model.RatingCounts[star] : 0;
+                    var percentage = Model.ReviewCount > 0 ? (int)Math.Round((double)count / Model.ReviewCount * 100) : 0;
+
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <span class="text-muted small text-nowrap" style="width: 50px;">@star Stars</span>
+                        <div class="progress flex-grow-1" style="height: 8px; background-color: var(--bg-surface);">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: @percentage%;" aria-valuenow="@percentage" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <span class="text-muted small text-nowrap" style="width: 40px;">@count (@percentage%)</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Individual Reviews List -->
+        @if (Model.Reviews.Any())
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="p-4 rounded-3" style="background-color: var(--bg-surface); border: 1px solid var(--border-subtle);">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <strong class="text-white">@review.AuthorName</strong>
+                                @if (review.IsVerifiedPurchase)
+                                {
+                                    <span class="badge bg-mint text-dark small">
+                                        <i class="bi bi-patch-check-fill me-1"></i> Verified Purchaser
+                                    </span>
+                                }
+                            </div>
+                            <span class="text-muted small">@review.CreatedAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+
+                        <div class="rating-stars mb-2">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= review.Rating)
+                                {
+                                    <i class="bi bi-star-fill text-warning small"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star text-secondary small"></i>
+                                }
+                            }
+                        </div>
+
+                        <p class="text-light mb-0 small" style="line-height: 1.6;">
+                            @review.Comment
+                        </p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-chat-dots fs-3 d-block mb-2 text-secondary"></i>
+                <p class="mb-0">No reviews yet for this product. Be the first verified customer to leave a review after ordering!</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function decrementQty() {
+            var input = document.getElementById('purchaseQty');
+            var val = parseInt(input.value) || 1;
+            if (val > 1) {
+                input.value = val - 1;
+            }
+        }
+
+        function incrementQty(max) {
+            var input = document.getElementById('purchaseQty');
+            var val = parseInt(input.value) || 1;
+            if (val < max) {
+                input.value = val + 1;
+            }
+        }
+    </script>
+}
