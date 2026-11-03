@@ -330,6 +330,51 @@ public class CatalogController : Controller
             })
             .ToListAsync();
 
+        // =========================================================================
+        // B3: Verified Customer Review Gate Verification
+        // =========================================================================
+        int? currentUserId = null;
+        bool isUserAuthenticated = User?.Identity?.IsAuthenticated == true;
+        if (isUserAuthenticated && User != null)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(userIdClaim, out var parsedId))
+            {
+                currentUserId = parsedId;
+            }
+        }
+
+        bool canUserReview = false;
+        bool hasUserReviewed = false;
+        ReviewItemViewModel? currentUserReview = null;
+
+        if (currentUserId.HasValue)
+        {
+            canUserReview = await _context.Orders
+                .AsNoTracking()
+                .AnyAsync(o => o.UserId == currentUserId.Value &&
+                               o.Status != "Cancelled" &&
+                               o.OrderItems.Any(oi => oi.ProductId == id));
+
+            var existingReview = await _context.Reviews
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.UserId == currentUserId.Value && r.ProductId == id);
+
+            if (existingReview != null)
+            {
+                hasUserReviewed = true;
+                currentUserReview = new ReviewItemViewModel
+                {
+                    ReviewId = existingReview.ReviewId,
+                    Rating = existingReview.Rating,
+                    Comment = existingReview.Comment,
+                    CreatedAt = existingReview.CreatedAt,
+                    AuthorName = User?.Identity?.Name ?? "You",
+                    IsVerifiedPurchase = true
+                };
+            }
+        }
+
         var viewModel = new ProductDetailsViewModel
         {
             ProductId = product.ProductId,
@@ -350,7 +395,11 @@ public class CatalogController : Controller
             FrequentlyBoughtTogether = frequentlyBoughtTogether,
             SimilarProducts = similarProducts,
             BundleTotalPrice = bundleTotal - bundleSavings,
-            BundleSavings = bundleSavings
+            BundleSavings = bundleSavings,
+            IsUserAuthenticated = isUserAuthenticated,
+            CanUserReview = canUserReview,
+            HasUserReviewed = hasUserReviewed,
+            CurrentUserReview = currentUserReview
         };
 
         return View(viewModel);

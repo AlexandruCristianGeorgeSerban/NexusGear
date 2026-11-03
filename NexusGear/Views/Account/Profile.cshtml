@@ -1,0 +1,261 @@
+@model NexusGear.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Customer Profile";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">Account Profile</li>
+        </ol>
+    </nav>
+
+    <!-- Profile Header Card -->
+    <div class="nexus-card-static p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center justify-content-center rounded-circle bg-dark border border-secondary border-opacity-50 text-mint fw-bold fs-3 shadow" style="width: 64px; height: 64px;">
+                    @(string.IsNullOrWhiteSpace(Model.FullName) ? "U" : Model.FullName.Substring(0, 1).ToUpper())
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2">
+                        <h1 class="h3 fw-bold text-white mb-0">@Model.FullName</h1>
+                        @if (Model.Role == "Admin")
+                        {
+                            <span class="badge bg-warning text-dark"><i class="bi bi-shield-fill-check me-1"></i> Admin</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-dark border border-info text-info"><i class="bi bi-patch-check-fill me-1"></i> Customer</span>
+                        }
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-envelope me-1"></i> @Model.Email &bull; Member since @Model.CreatedAt.ToString("MMMM yyyy")
+                    </p>
+                </div>
+            </div>
+
+            <!-- Sign Out Action -->
+            <div>
+                <form method="post" asp-action="Logout" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Metric Stat Counters -->
+        <div class="row g-3 mt-3 pt-3 border-top border-secondary border-opacity-25">
+            <div class="col-6 col-md-3">
+                <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted small d-block">Orders Placed</span>
+                    <strong class="h4 text-white mb-0">@Model.OrdersCount</strong>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted small d-block">Verified Reviews</span>
+                    <strong class="h4 text-warning mb-0">@Model.ReviewsCount</strong>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted small d-block">Saved Favorites</span>
+                    <strong class="h4 text-danger mb-0">@Model.WishlistCount</strong>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-3 rounded-2 bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted small d-block">Saved Addresses</span>
+                    <strong class="h4 text-mint mb-0">@Model.Addresses.Count</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left: Address Book Section (A4) -->
+        <div class="col-12 col-lg-7">
+            <div class="nexus-card-static p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div>
+                        <h4 class="h5 text-white fw-bold mb-1">
+                            <i class="bi bi-geo-alt-fill text-mint me-1"></i> Address Book
+                        </h4>
+                        <p class="text-muted small mb-0">Manage default shipping destinations for checkout.</p>
+                    </div>
+                    <button class="btn btn-sm btn-outline-mint" type="button" data-bs-toggle="collapse" data-bs-target="#newAddressCollapse" aria-expanded="false" aria-controls="newAddressCollapse">
+                        <i class="bi bi-plus-lg me-1"></i> Add Address
+                    </button>
+                </div>
+
+                <!-- Add New Address Collapsible Form -->
+                <div class="collapse mb-4" id="newAddressCollapse">
+                    <div class="p-3 rounded-3 bg-dark border border-secondary border-opacity-50">
+                        <h6 class="text-white fw-bold mb-3">Add New Delivery Address</h6>
+                        <form method="post" asp-action="AddAddress">
+                            @Html.AntiForgeryToken()
+                            
+                            <div class="mb-3">
+                                <label class="form-label-nexus small">Street &amp; Building Details</label>
+                                <input name="Street" class="form-control form-control-nexus" placeholder="Bulevardul Decebal Nr. 10, Bl. S2, Ap. 15" required />
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label-nexus small">City</label>
+                                    <input name="City" class="form-control form-control-nexus" placeholder="Craiova" required />
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label-nexus small">County / Region</label>
+                                    <input name="County" class="form-control form-control-nexus" placeholder="Dolj" required />
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label-nexus small">Postal Code</label>
+                                    <input name="PostalCode" class="form-control form-control-nexus" placeholder="200734" required />
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label-nexus small">Phone Number</label>
+                                    <input name="Phone" class="form-control form-control-nexus" placeholder="+40 722 000 000" required />
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="IsDefault" value="true" id="isDefaultCheck" />
+                                <label class="form-check-label text-muted small" for="isDefaultCheck">
+                                    Set as default shipping address
+                                </label>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-mint btn-sm fw-bold">Save Address</button>
+                                <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#newAddressCollapse">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Saved Address Cards List -->
+                @if (Model.Addresses.Any())
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var addr in Model.Addresses)
+                        {
+                            <div class="p-3 rounded-3 position-relative" style="background-color: var(--bg-surface); border: 1px solid @(addr.IsDefault ? "var(--color-mint)" : "var(--border-subtle)");">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        @if (addr.IsDefault)
+                                        {
+                                            <span class="badge badge-mint fw-bold mb-1">
+                                                <i class="bi bi-star-fill me-1"></i> Default Shipping Address
+                                            </span>
+                                        }
+                                        <p class="text-white fw-bold mb-0">@addr.Street</p>
+                                    </div>
+                                    
+                                    <!-- Delete Button -->
+                                    <form method="post" asp-action="DeleteAddress" asp-route-id="@addr.AddressId" onsubmit="return confirm('Are you sure you want to remove this address?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Delete Address">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <p class="text-muted small mb-2">
+                                    @addr.City, @addr.County &bull; Postal Code: <strong class="text-light">@addr.PostalCode</strong><br />
+                                    <i class="bi bi-telephone text-info me-1"></i> @addr.Phone
+                                </p>
+
+                                @if (!addr.IsDefault)
+                                {
+                                    <form method="post" asp-action="SetDefaultAddress" asp-route-id="@addr.AddressId" class="mt-2">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary py-0.5 px-2 small">
+                                            <i class="bi bi-check2 me-1"></i> Set as Default
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-house-door fs-2 text-secondary d-block mb-2"></i>
+                        <p class="mb-2">You don't have any saved shipping addresses yet.</p>
+                        <button class="btn btn-sm btn-mint" type="button" data-bs-toggle="collapse" data-bs-target="#newAddressCollapse">
+                            <i class="bi bi-plus-lg me-1"></i> Add First Address
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Right: Profile Details & Password Security (A4) -->
+        <div class="col-12 col-lg-5">
+            <div class="d-flex flex-column gap-4">
+                <!-- Update Profile Info Card -->
+                <div class="nexus-card-static p-4">
+                    <h5 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-person-gear text-info"></i> Personal Information
+                    </h5>
+                    <form method="post" asp-action="UpdateProfile">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label-nexus small">Full Name</label>
+                            <input name="FullName" value="@Model.FullName" class="form-control form-control-nexus" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-nexus small">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary border-opacity-50 text-info">
+                                    <i class="bi bi-envelope-fill"></i>
+                                </span>
+                                <input value="@Model.Email" class="form-control form-control-nexus" readonly style="background-color: #070D18; color: #E2E8F0; border-color: var(--border-subtle); cursor: not-allowed;" />
+                            </div>
+                            <span class="text-muted small d-block mt-1">Email cannot be modified directly for security reasons.</span>
+                        </div>
+                        <button type="submit" class="btn btn-tech btn-sm fw-bold">
+                            Update Details
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Change Password Card (BCrypt) -->
+                <div class="nexus-card-static p-4">
+                    <h5 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-key-fill text-warning"></i> Change Password
+                    </h5>
+                    <form method="post" asp-action="ChangePassword">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label-nexus small">Current Password</label>
+                            <input type="password" name="CurrentPassword" class="form-control form-control-nexus" placeholder="••••••••" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-nexus small">New Password (min 6 characters)</label>
+                            <input type="password" name="NewPassword" class="form-control form-control-nexus" placeholder="••••••••" required minlength="6" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-nexus small">Confirm New Password</label>
+                            <input type="password" name="ConfirmNewPassword" class="form-control form-control-nexus" placeholder="••••••••" required minlength="6" />
+                        </div>
+                        <button type="submit" class="btn btn-mint btn-sm fw-bold">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

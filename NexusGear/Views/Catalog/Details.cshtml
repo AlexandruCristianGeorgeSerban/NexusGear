@@ -403,6 +403,85 @@
             </div>
         </div>
 
+        <!-- Verified Buyer Review Gate & Submission Form (B3) -->
+        <div class="mb-5 pb-4 border-bottom border-secondary border-opacity-25">
+            @if (Model.CanUserReview)
+            {
+                <div class="p-4 rounded-3 bg-dark border border-mint border-opacity-50">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="h5 text-white fw-bold mb-0">
+                            <i class="bi bi-star-fill text-warning me-2"></i>
+                            @(Model.HasUserReviewed ? "Update Your Verified Review" : "Write a Verified Customer Review")
+                        </h4>
+                        <span class="badge badge-mint fw-bold">
+                            <i class="bi bi-patch-check-fill me-1"></i> Verified Purchaser Gate Unlocked
+                        </span>
+                    </div>
+
+                    <form method="post" asp-controller="Reviews" asp-action="Submit">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ProductId" value="@Model.ProductId" />
+
+                        <!-- Star Rating -->
+                        <div class="mb-3">
+                            <label class="form-label-nexus small">Your Hardware Rating</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <select name="Rating" class="form-select form-select-nexus" style="max-width: 260px;">
+                                    <option value="5" selected="@(Model.CurrentUserReview?.Rating == 5 ? "selected" : null)">★★★★★ (5 Stars - Exceptional)</option>
+                                    <option value="4" selected="@(Model.CurrentUserReview?.Rating == 4 ? "selected" : null)">★★★★☆ (4 Stars - Very Good)</option>
+                                    <option value="3" selected="@(Model.CurrentUserReview?.Rating == 3 ? "selected" : null)">★★★☆☆ (3 Stars - Average)</option>
+                                    <option value="2" selected="@(Model.CurrentUserReview?.Rating == 2 ? "selected" : null)">★★☆☆☆ (2 Stars - Below Expectations)</option>
+                                    <option value="1" selected="@(Model.CurrentUserReview?.Rating == 1 ? "selected" : null)">★☆☆☆☆ (1 Star - Poor)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Review Comment -->
+                        <div class="mb-3">
+                            <label class="form-label-nexus small">Detailed Experience &amp; Build Feedback</label>
+                            <textarea name="Comment" class="form-control form-control-nexus" rows="3" placeholder="Share your experience regarding switches, texture, comfort, latency, or build quality..." required minlength="5" maxlength="1000">@(Model.CurrentUserReview?.Comment ?? "")</textarea>
+                            <span class="text-muted small">Minimum 5 characters. Published with verified customer status.</span>
+                        </div>
+
+                        <button type="submit" class="btn btn-mint btn-sm fw-bold">
+                            <i class="bi bi-send-fill me-1"></i> @(Model.HasUserReviewed ? "Update Review" : "Submit Verified Review")
+                        </button>
+                    </form>
+                </div>
+            }
+            else if (Model.IsUserAuthenticated)
+            {
+                <div class="p-3 rounded-3 bg-dark border border-secondary border-opacity-25 d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-secondary bg-opacity-25 p-2 text-info">
+                        <i class="bi bi-shield-lock-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <strong class="text-white d-block small">Verified Purchase Gate Active</strong>
+                        <p class="text-muted small mb-0">
+                            Only customers who have ordered and received this hardware can publish reviews. Once your purchase is confirmed, this form will automatically unlock.
+                        </p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="p-3 rounded-3 bg-dark border border-secondary border-opacity-25 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-secondary bg-opacity-25 p-2 text-mint">
+                            <i class="bi bi-chat-quote-fill fs-4"></i>
+                        </div>
+                        <div>
+                            <strong class="text-white d-block small">Have you purchased this hardware?</strong>
+                            <p class="text-muted small mb-0">Sign in to check verified buyer status and submit your rating.</p>
+                        </div>
+                    </div>
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@($"/Catalog/Details/{Model.ProductId}#reviews")" class="btn btn-sm btn-outline-mint text-nowrap">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Review
+                    </a>
+                </div>
+            }
+        </div>
+
         <!-- Individual Reviews List -->
         @if (Model.Reviews.Any())
         {
@@ -415,7 +494,7 @@
                                 <strong class="text-white">@review.AuthorName</strong>
                                 @if (review.IsVerifiedPurchase)
                                 {
-                                    <span class="badge bg-mint text-dark small">
+                                    <span class="badge badge-mint small">
                                         <i class="bi bi-patch-check-fill me-1"></i> Verified Purchaser
                                     </span>
                                 }
