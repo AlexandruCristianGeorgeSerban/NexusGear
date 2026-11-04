@@ -58,7 +58,18 @@ function updateWishlistBadge(count) {
 }
 
 // Global AJAX addToCart handler
-async function addToCart(productId, quantity = 1) {
+const inFlightCartOperations = new Set();
+
+async function addToCart(productId, quantity = 1, triggerBtn = null) {
+    if (inFlightCartOperations.has(productId)) {
+        return;
+    }
+
+    inFlightCartOperations.add(productId);
+    if (triggerBtn) {
+        triggerBtn.disabled = true;
+        triggerBtn.classList.add('opacity-75');
+    }
     try {
         const formData = new FormData();
         formData.append('productId', productId);
@@ -92,6 +103,14 @@ async function addToCart(productId, quantity = 1) {
         }
     } catch (err) {
         showNexusToast('An error occurred while adding to cart.', 'danger');
+    } finally {
+        setTimeout(() => {
+            inFlightCartOperations.delete(productId);
+            if (triggerBtn) {
+                triggerBtn.disabled = false;
+                triggerBtn.classList.remove('opacity-75');
+            }
+        }, 350);
     }
 }
 
@@ -141,6 +160,16 @@ async function toggleWishlist(productId) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Sync cart badge on page load
+    fetch('/Cart/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && typeof data.count === 'number') {
+                updateCartBadge(data.count);
+            }
+        })
+        .catch(() => {});
+
     // Delegated click handler for Add to Cart & Wishlist buttons
     document.addEventListener('click', (e) => {
         const cartBtn = e.target.closest('.btn-add-cart');
@@ -150,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (productId) {
                 const qtyInput = document.getElementById('purchaseQty');
                 const qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
-                addToCart(productId, qty);
+                addToCart(productId, qty, cartBtn);
             }
             return;
         }

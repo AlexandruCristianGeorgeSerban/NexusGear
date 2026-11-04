@@ -1,0 +1,67 @@
+@model NexusGear.ViewModels.CartItemViewModel
+
+<tr class="border-bottom border-secondary border-opacity-25 cart-item-row" data-product-id="@Model.ProductId" data-max-stock="@Model.MaxAvailableStock">
+    <!-- Product Info -->
+    <td class="ps-4 py-3">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-controller="Catalog" asp-action="Details" asp-route-id="@Model.ProductId" class="text-decoration-none flex-shrink-0">
+                <img src="@Model.ImageUrl" alt="@Model.ProductName" class="rounded border border-secondary border-opacity-50" style="width: 64px; height: 64px; object-fit: cover; background-color: #070D18;" />
+            </a>
+            <div>
+                <a asp-controller="Catalog" asp-action="Details" asp-route-id="@Model.ProductId" class="text-white text-decoration-none fw-bold d-block line-clamp-1 hover-mint">
+                    @Model.ProductName
+                </a>
+                <span class="badge bg-dark border border-secondary border-opacity-50 text-info small mt-1">@Model.CategoryName</span>
+                @if (!Model.IsQuantityAvailable)
+                {
+                    <div class="text-danger small mt-1">
+                        <i class="bi bi-exclamation-circle-fill me-1"></i> Only @Model.MaxAvailableStock left in stock!
+                    </div>
+                }
+            </div>
+        </div>
+    </td>
+
+    <!-- Quantity Stepper -->
+    <td class="py-3 text-center">
+        <form method="post" asp-action="Update" class="d-inline-flex align-items-center justify-content-center quantity-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="productId" value="@Model.ProductId" />
+            <div class="input-group input-group-sm" style="width: 110px;">
+                <button type="submit" name="quantity" value="@(Model.Quantity - 1)" class="btn btn-outline-secondary btn-qty-dec" title="Decrease">
+                    <i class="bi bi-dash"></i>
+                </button>
+                <span class="cart-qty-value form-control form-control-nexus text-center px-1 fw-bold d-flex align-items-center justify-content-center" 
+                      style="background-color: #070D18; color: #FFFFFF; min-width: 40px; user-select: none;">
+                    @Model.Quantity
+                </span>
+                <button type="submit" name="quantity" value="@(Model.Quantity + 1)" class="btn btn-outline-secondary btn-qty-inc" 
+                        title="Increase" @(Model.Quantity >= Model.MaxAvailableStock ? "disabled" : "")>
+                    <i class="bi bi-plus"></i>
+                </button>
+            </div>
+        </form>
+    </td>
+
+    <!-- Unit Price -->
+    <td class="py-3 text-end text-muted">
+        @Model.UnitPrice.ToString("N2") <span class="small">RON</span>
+    </td>
+
+    <!-- Line Total -->
+    <td class="py-3 text-end pe-4 text-mint fw-bold cart-line-total">
+        @Model.LineTotal.ToString("N2") <span class="small">RON</span>
+    </td>
+
+    <!-- Remove Action -->
+    <td class="py-3 text-center pe-3">
+        <form method="post" asp-action="Remove" class="d-inline cart-remove-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="productId" value="@Model.ProductId" />
+            <button type="submit" class="btn btn-link text-danger p-0" title="Remove item">
+                <i class="bi bi-trash3 fs-5"></i>
+            </button>
+        </form>
+    </td>
+</tr>
+
