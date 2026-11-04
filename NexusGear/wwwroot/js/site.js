@@ -51,8 +51,21 @@ function updateWishlistBadge(count) {
         badge.textContent = count;
         if (count > 0) {
             badge.classList.remove('d-none');
+            badge.classList.add('animate__animated', 'animate__pulse');
         } else {
             badge.classList.add('d-none');
+        }
+    });
+
+    // Update navbar heart icon between outline and filled
+    const navHearts = document.querySelectorAll('a[title="Saved Favorites"] i');
+    navHearts.forEach(navHeart => {
+        if (count > 0) {
+            navHeart.classList.remove('bi-heart');
+            navHeart.classList.add('bi-heart-fill');
+        } else {
+            navHeart.classList.remove('bi-heart-fill');
+            navHeart.classList.add('bi-heart');
         }
     });
 }
@@ -143,10 +156,22 @@ async function toggleWishlist(productId) {
             if (data.success) {
                 updateWishlistBadge(data.wishlistCount);
                 showNexusToast(data.message, 'success');
-                const heartBtn = document.querySelector(`[data-product-id="${productId}"].btn-wishlist-toggle`);
-                if (heartBtn) {
-                    heartBtn.classList.toggle('text-danger', data.isAdded);
-                }
+                const heartBtns = document.querySelectorAll(`[data-product-id="${productId}"].btn-wishlist-toggle`);
+                heartBtns.forEach(heartBtn => {
+                    heartBtn.classList.toggle('active', data.isAdded);
+                    heartBtn.classList.toggle('border-danger', data.isAdded);
+                    heartBtn.title = data.isAdded ? 'Remove from Wishlist' : 'Add to Wishlist';
+                    const icon = heartBtn.querySelector('i');
+                    if (icon) {
+                        if (data.isAdded) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                        } else {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                        }
+                    }
+                });
             } else {
                 showNexusToast(data.message || 'Could not update wishlist.', 'danger');
             }
@@ -166,6 +191,16 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (data && typeof data.count === 'number') {
                 updateCartBadge(data.count);
+            }
+        })
+        .catch(() => {});
+
+    // Sync wishlist badge on page load
+    fetch('/Wishlist/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && typeof data.count === 'number') {
+                updateWishlistBadge(data.count);
             }
         })
         .catch(() => {});

@@ -439,6 +439,13 @@ p.lead,
   color: #FFFFFF !important;
 }
 
+.btn-tech.btn-sm {
+  padding: 0.25rem 0.65rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  line-height: 1.5;
+}
+
 /* Form Controls */
 .form-label-nexus {
   color: var(--text-muted);

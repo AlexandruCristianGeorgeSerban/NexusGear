@@ -1,6 +1,16 @@
 @inject NexusGear.Services.Interfaces.ICartService CartService
+@inject NexusGear.Services.Interfaces.IWishlistService WishlistService
 @{
     var navCartCount = await CartService.GetCartItemCountAsync();
+    int navWishlistCount = 0;
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(claim, out var uid))
+        {
+            navWishlistCount = await WishlistService.GetWishlistCountAsync(uid);
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -64,10 +74,10 @@
                     <!-- Right-side Action Icons (Wishlist, Cart, Account) -->
                     <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                         <!-- Wishlist Button (B7) -->
-                        <a asp-controller="Wishlist" asp-action="Index" class="btn-icon-nexus position-relative" title="Saved Favorites">
-                            <i class="bi bi-heart fs-6 text-danger"></i>
+                        <a asp-controller="Wishlist" asp-action="Index" class="btn-icon-nexus position-relative me-2" title="Saved Favorites" style="z-index: 10;">
+                            <i class="bi @(navWishlistCount > 0 ? "bi-heart-fill" : "bi-heart") fs-6 text-danger"></i>
                             <span class="btn-label d-none d-xl-inline">Wishlist</span>
-                            <span class="position-absolute top-0 start-100 translate-middle badge badge-blue wishlist-badge d-none">0</span>
+                            <span class="position-absolute top-0 start-100 translate-middle badge badge-blue wishlist-badge @(navWishlistCount > 0 ? "" : "d-none")">@navWishlistCount</span>
                         </a>
 
                         <!-- Cart Button (A3) -->

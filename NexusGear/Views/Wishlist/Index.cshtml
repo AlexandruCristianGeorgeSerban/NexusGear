@@ -1,0 +1,87 @@
+@model NexusGear.ViewModels.WishlistViewModel
+@{
+    ViewData["Title"] = "Saved Favorites - NexusGear";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index" class="text-decoration-none text-muted">Catalog</a></li>
+            <li class="breadcrumb-item active text-white" aria-current="page">Saved Favorites</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h1 class="h2 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-heart-fill text-danger"></i> Saved Favorites
+                @if (!Model.IsEmpty)
+                {
+                    <span id="wishlistHeaderCount" class="badge badge-blue fs-6 align-middle">@Model.TotalCount @(Model.TotalCount == 1 ? "item" : "items")</span>
+                }
+            </h1>
+            <p class="text-muted small mb-0">Keep track of your dream gaming peripherals and easily move them to your shopping cart.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center px-3 py-1">
+                <i class="bi bi-arrow-left me-1"></i> Continue Shopping
+            </a>
+            <a asp-controller="Cart" asp-action="Index" class="btn btn-tech btn-sm d-inline-flex align-items-center justify-content-center px-3 py-1">
+                <i class="bi bi-cart3 me-1"></i> View Cart
+            </a>
+        </div>
+    </div>
+
+    @if (Model.IsEmpty)
+    {
+        <!-- Empty Wishlist State -->
+        <div class="nexus-card-static text-center py-5 my-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-dark border border-secondary border-opacity-50 mb-4 shadow" style="width: 80px; height: 80px;">
+                <i class="bi bi-suit-heart text-muted fs-1"></i>
+            </div>
+            <h2 class="h4 fw-bold text-white mb-2">Your Wishlist is Empty</h2>
+            <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+                You haven't saved any gaming peripherals to your favorites yet. Browse our curated gear catalog and tap the heart icon on items you love.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a asp-controller="Catalog" asp-action="Index" class="btn btn-tech px-4 py-2 fw-bold">
+                    <i class="bi bi-grid-fill me-1"></i> Explore Peripherals
+                </a>
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary px-4 py-2">
+                    <i class="bi bi-cart3 me-1 text-mint"></i> Go to Shopping Cart
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Wishlist Items Grid -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-4" id="wishlistGrid">
+            @foreach (var item in Model.Items)
+            {
+                <partial name="_WishlistItemCard" model="item" />
+            }
+        </div>
+
+        <!-- Footer Actions Bar -->
+        <div class="nexus-card-static p-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center px-3 py-1">
+                <i class="bi bi-arrow-left me-1"></i> Continue Shopping
+            </a>
+            <form method="post" asp-action="Clear" onsubmit="return confirm('Are you sure you want to remove all items from your wishlist?');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center justify-content-center">
+                    <i class="bi bi-trash me-1"></i> Clear Wishlist
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/wishlist.js" asp-append-version="true"></script>
+}
+

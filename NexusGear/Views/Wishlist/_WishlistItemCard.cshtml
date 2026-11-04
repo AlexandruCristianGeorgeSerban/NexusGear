@@ -1,0 +1,62 @@
+@model NexusGear.ViewModels.WishlistItemViewModel
+
+<div class="col wishlist-item-col" data-product-id="@Model.ProductId">
+    <div class="nexus-card-static h-100 d-flex flex-column p-3 position-relative">
+        <!-- Card Badges -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-dark border border-secondary border-opacity-50 text-info small">@Model.CategoryName</span>
+            @if (Model.IsInStock)
+            {
+                <span class="badge badge-mint small">In Stock</span>
+            }
+            else
+            {
+                <span class="badge bg-danger small">Out of Stock</span>
+            }
+        </div>
+
+        <!-- Thumbnail Image -->
+        <a asp-controller="Catalog" asp-action="Details" asp-route-id="@Model.ProductId" class="d-block text-center my-2 text-decoration-none overflow-hidden rounded bg-dark" style="aspect-ratio: 1; max-height: 200px;">
+            <img src="@Model.ImageUrl" alt="@Model.ProductName" class="w-100 h-100" style="object-fit: cover; transition: transform 0.3s ease;" 
+                 onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1.0)'" />
+        </a>
+
+        <!-- Title -->
+        <h3 class="h6 fw-bold text-white mb-1">
+            <a asp-controller="Catalog" asp-action="Details" asp-route-id="@Model.ProductId" class="text-white text-decoration-none hover-mint line-clamp-2" title="@Model.ProductName">
+                @Model.ProductName
+            </a>
+        </h3>
+
+        <!-- Added Date -->
+        <div class="text-muted small mb-2" style="font-size: 0.75rem;">
+            <i class="bi bi-clock me-1"></i> Added @Model.AddedAt.ToString("dd MMM yyyy")
+        </div>
+
+        <!-- Price -->
+        <div class="h5 fw-bold text-mint mb-3 mt-auto">
+            @Model.UnitPrice.ToString("N2") <span class="fs-6 text-white">RON</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2 align-items-stretch mt-auto">
+            <form method="post" asp-action="MoveToCart" class="wishlist-move-form flex-grow-1 d-flex">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="productId" value="@Model.ProductId" />
+                <button type="submit" class="btn btn-tech w-100 btn-sm fw-bold d-inline-flex align-items-center justify-content-center py-2 px-3 @(!Model.IsInStock ? "disabled opacity-50" : "")" 
+                        title="@(Model.IsInStock ? "Move to Cart" : "Item is currently out of stock")" @(!Model.IsInStock ? "disabled" : "")>
+                    <i class="bi bi-cart-plus me-1 fs-6"></i> Move to Cart
+                </button>
+            </form>
+
+            <form method="post" asp-action="Remove" class="wishlist-remove-form d-flex">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="productId" value="@Model.ProductId" />
+                <button type="submit" class="btn btn-outline-danger btn-sm px-3 d-inline-flex align-items-center justify-content-center py-2" title="Remove from favorites">
+                    <i class="bi bi-trash3 fs-6"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
