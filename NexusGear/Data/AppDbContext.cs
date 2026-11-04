@@ -51,6 +51,8 @@ public class AppDbContext : DbContext
         // 4. CartItem
         modelBuilder.Entity<CartItem>(entity =>
         {
+            entity.HasIndex(ci => new { ci.UserId, ci.ProductId }).IsUnique();
+
             entity.HasOne(ci => ci.User)
                   .WithMany(u => u.CartItems)
                   .HasForeignKey(ci => ci.UserId)
@@ -65,6 +67,8 @@ public class AppDbContext : DbContext
         // 5. WishlistItem
         modelBuilder.Entity<WishlistItem>(entity =>
         {
+            entity.HasIndex(wi => new { wi.UserId, wi.ProductId }).IsUnique();
+
             entity.HasOne(wi => wi.User)
                   .WithMany(u => u.WishlistItems)
                   .HasForeignKey(wi => wi.UserId)
