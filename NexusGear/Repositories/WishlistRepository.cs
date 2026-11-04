@@ -30,5 +30,18 @@ public class WishlistRepository : RepositoryBase<WishlistItem>, IWishlistReposit
         return await _context.WishlistItems
             .CountAsync(w => w.UserId == userId);
     }
-}
 
+    public async Task<HashSet<int>> GetUserWishlistProductIdsAsync(int userId)
+    {
+        var ids = await _context.WishlistItems
+            .Where(w => w.UserId == userId)
+            .Select(w => w.ProductId)
+            .ToListAsync();
+        return ids.ToHashSet();
+    }
+
+    public void DeleteRange(IEnumerable<WishlistItem> items)
+    {
+        _context.WishlistItems.RemoveRange(items);
+    }
+}

@@ -58,8 +58,9 @@ builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
-// Services (A3 Architecture)
+// Services (A3, B7 Architecture)
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
 
 // ==============================================================================
 // 3. Application Pipeline Configuration
