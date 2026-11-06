@@ -1,0 +1,135 @@
+@model NexusGear.ViewModels.CartSummaryViewModel
+@inject NexusGear.Services.Interfaces.IWishlistService WishlistService
+@{
+    ViewData["Title"] = "Shopping Cart - NexusGear";
+    int wishlistCount = 0;
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(uidClaim, out var uid))
+        {
+            wishlistCount = await WishlistService.GetWishlistCountAsync(uid);
+        }
+    }
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index" class="text-decoration-none text-muted">Catalog</a></li>
+            <li class="breadcrumb-item active text-white" aria-current="page">Shopping Cart</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <div>
+            <h1 class="h2 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-cart3 text-mint"></i> Shopping Cart
+                @if (!Model.IsEmpty)
+                {
+                    <span id="cartHeaderCount" class="badge badge-mint fs-6 align-middle">@Model.TotalItemsCount @(Model.TotalItemsCount == 1 ? "item" : "items")</span>
+                }
+            </h1>
+            <p class="text-muted small mb-0">Review your chosen gaming peripherals and configure quantities before checkout.</p>
+        </div>
+        @if (!Model.IsEmpty)
+        {
+            <div class="d-flex align-items-center gap-2">
+                <a asp-controller="Wishlist" asp-action="Index" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center px-3 py-1" title="Saved Favorites">
+                    <i class="bi @(wishlistCount > 0 ? "bi-heart-fill" : "bi-heart") me-1 text-danger"></i> Wishlist
+                    @if (wishlistCount > 0)
+                    {
+                        <span class="badge badge-blue ms-1">@wishlistCount</span>
+                    }
+                </a>
+                <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center px-3 py-1">
+                    <i class="bi bi-arrow-left me-1"></i> Continue Shopping
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (Model.IsEmpty)
+    {
+        <!-- Empty Cart State -->
+        <div class="nexus-card-static text-center py-5 my-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-dark border border-secondary border-opacity-50 mb-4 shadow" style="width: 80px; height: 80px;">
+                <i class="bi bi-cart-x fs-1 text-muted"></i>
+            </div>
+            <h2 class="h4 fw-bold text-white mb-2">Your Shopping Cart is Empty</h2>
+            <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+                Looks like you haven't equipped your battlestation yet. Explore our curated selection of high-performance peripherals.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a asp-controller="Catalog" asp-action="Index" class="btn btn-tech px-4 py-2 fw-bold">
+                    <i class="bi bi-grid-fill me-1"></i> Explore Peripherals
+                </a>
+                <a asp-controller="Wishlist" asp-action="Index" class="btn btn-outline-secondary px-4 py-2 d-inline-flex align-items-center">
+                    <i class="bi @(wishlistCount > 0 ? "bi-heart-fill" : "bi-heart") me-2 text-danger"></i>
+                    <span>View Wishlist</span>
+                    @if (wishlistCount > 0)
+                    {
+                        <span class="badge badge-blue ms-2">@wishlistCount</span>
+                    }
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Free Shipping Progress Bar (A3 UX) -->
+        <partial name="_FreeShippingBar" model="Model" />
+
+        <div class="row g-4">
+            <!-- Cart Items List (col-lg-8) -->
+            <div class="col-lg-8">
+                <div class="nexus-card-static p-0 overflow-hidden mb-3">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover align-middle mb-0" style="background-color: transparent;">
+                            <thead class="border-bottom border-secondary border-opacity-50 text-muted small text-uppercase">
+                                <tr>
+                                    <th scope="col" class="ps-4 py-3">Product</th>
+                                    <th scope="col" class="py-3 text-center" style="width: 140px;">Quantity</th>
+                                    <th scope="col" class="py-3 text-end" style="width: 130px;">Price</th>
+                                    <th scope="col" class="py-3 text-end pe-4" style="width: 130px;">Total</th>
+                                    <th scope="col" class="py-3 text-center" style="width: 60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <partial name="_CartItemRow" model="item" />
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Cart Table Footer Actions -->
+                    <div class="p-3 bg-dark d-flex flex-wrap justify-content-between align-items-center gap-2 border-top border-secondary border-opacity-50">
+                        <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left me-1"></i> Continue Shopping
+                        </a>
+                        <form method="post" asp-action="Clear" class="d-inline" onsubmit="return confirm('Are you sure you want to remove all items from your cart?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-1"></i> Clear Cart
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary (col-lg-4) -->
+            <div class="col-lg-4">
+                <partial name="_OrderSummary" model="Model" />
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/cart.js" asp-append-version="true"></script>
+}

@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using NexusGear.Data;
+using NexusGear.Services;
+using NexusGear.Services.Interfaces;
+using NexusGear.Repositories;
+using NexusGear.Repositories.Interfaces;
 
 // ==============================================================================
 // 1. Environment Variable Loader (.env support)
@@ -46,6 +50,17 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+// Repositories & Unit of Work (Repository Wrapper Pattern)
+builder.Services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+// Services (A3, B7 Architecture)
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IWishlistService, WishlistService>();
 
 // ==============================================================================
 // 3. Application Pipeline Configuration

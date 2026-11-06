@@ -1,6 +1,18 @@
 @model NexusGear.ViewModels.ProductDetailsViewModel
+@inject NexusGear.Services.Interfaces.IWishlistService WishlistService
 @{
     ViewData["Title"] = $"{Model.Name} - NexusGear";
+
+    bool isWishlisted = false;
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(uidClaim, out var uid))
+        {
+            var userWishlistIds = await WishlistService.GetUserWishlistProductIdsAsync(uid);
+            isWishlisted = userWishlistIds.Contains(Model.ProductId);
+        }
+    }
 }
 
 <div class="container py-4">
@@ -158,8 +170,8 @@
 
                         <div class="col-12 col-sm-3">
                             <label class="form-label-nexus small mb-1 d-none d-sm-block">&nbsp;</label>
-                            <button type="button" class="btn btn-tech w-100 py-2 btn-wishlist-toggle" data-product-id="@Model.ProductId" title="Save to Wishlist">
-                                <i class="bi bi-heart text-danger me-1"></i> Wishlist
+                            <button type="button" class="btn btn-tech w-100 py-2 btn-wishlist-toggle @(isWishlisted ? "active border-danger" : "")" data-product-id="@Model.ProductId" title="@(isWishlisted ? "Remove from Wishlist" : "Save to Wishlist")">
+                                <i class="bi @(isWishlisted ? "bi-heart-fill" : "bi-heart") text-danger me-1"></i> Wishlist
                             </button>
                         </div>
                     </div>

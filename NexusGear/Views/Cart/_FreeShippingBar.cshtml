@@ -1,0 +1,26 @@
+@model NexusGear.ViewModels.CartSummaryViewModel
+
+<div class="nexus-card-static p-3 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="small text-white fw-bold">
+            <i class="bi bi-truck text-mint me-1"></i>
+            <span id="freeShippingStatus">
+                @if (Model.Subtotal >= NexusGear.ViewModels.CartSummaryViewModel.FreeShippingThreshold)
+                {
+                    <span class="text-mint">🎉 Free Standard Shipping Unlocked!</span>
+                }
+                else
+                {
+                    <span>Add <strong class="text-mint">@Model.AmountNeededForFreeShipping.ToString("N2") RON</strong> more for <strong>FREE Shipping</strong></span>
+                }
+            </span>
+        </span>
+        <span class="small text-muted">Prag: @NexusGear.ViewModels.CartSummaryViewModel.FreeShippingThreshold.ToString("N0") RON</span>
+    </div>
+    <div class="progress" style="height: 6px; background-color: #070D18;">
+        <div id="freeShippingProgressBar" class="progress-bar bg-mint" role="progressbar" 
+             style="width: @Model.FreeShippingProgressPercentage%; transition: width 0.4s ease;" 
+             aria-valuenow="@Model.FreeShippingProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+</div>
+

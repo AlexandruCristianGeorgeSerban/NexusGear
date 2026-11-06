@@ -53,7 +53,7 @@ dotnet run --project NexusGear
 * **Database**: SQLite via Entity Framework Core with Fluent API, migrations, and deterministic seed scripts (30 original products across 4 categories: Mechanical Keyboards, Gaming Mice, Deskmats & Mousepads, and Ergonomic Gaming Chairs) with photorealistic AI product assets.
 * **Payment Gateway**: Stripe (Sandbox/Test Mode) utilizing verified asynchronous server-side webhooks (`checkout.session.completed`) and atomic inventory reduction.
 * **Email Testing**: Transactional HTML order confirmations sent through Mailtrap SMTP.
-* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, and verified customer review gates (21 automated unit tests).
+* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, and wishlist engine (47 automated unit tests).
 
 ---
 
@@ -63,7 +63,7 @@ dotnet run --project NexusGear
 | :--- | :--- | :--- | :--- | :--- |
 | **A1** | **Product catalog** (pagination ≤ 12/page, categories, seed data) | Popa-Ion Andrei | P2 (Week 5) | Complete |
 | **A2** | **Basic search** (case-insensitive title search, empty state) | Popa-Ion Andrei | P2 (Week 6) | Complete |
-| **A3** | **Shopping cart** (server-calculated totals, stock checks, persistence) | Șerban Alexandru-Cristian-George | P3 (Week 8) | Planned |
+| **A3** | **Shopping cart** (server-calculated totals, stock checks, persistence) | Șerban Alexandru-Cristian-George | P3 (Week 8) | Complete |
 | **A4** | **User accounts** (registration/login, BCrypt password hashing) | Șerban Alexandru-Cristian-George | P2 (Week 5) | Complete |
 | **A5** | **Checkout flow** (address, 2 shipping methods, summary, confirmation) | Popa-Ion Andrei | P3 (Week 8) | Planned |
 | **A6** | **Sandbox payment** (Stripe test session + verified webhook) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Planned |
@@ -86,7 +86,7 @@ dotnet run --project NexusGear
 | **B4** | **Sales dashboard** (daily sales chart, top 5 products, AOV, time filters) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Planned |
 | **B5** | **Discount codes** (% or fixed amount, expiry date, max uses, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Planned |
 | **B6** | **Transactional email** (order confirmation via Mailtrap SMTP) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Planned |
-| **B7** | **Wishlist** (favorites for authenticated users, move to cart) | Popa-Ion Andrei | P3 (Week 8) | Planned |
+| **B7** | **Wishlist** (favorites for authenticated users, move to cart) | Popa-Ion Andrei | P3 (Week 8) | Complete |
 
 ---
 

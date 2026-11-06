@@ -51,14 +51,38 @@ function updateWishlistBadge(count) {
         badge.textContent = count;
         if (count > 0) {
             badge.classList.remove('d-none');
+            badge.classList.add('animate__animated', 'animate__pulse');
         } else {
             badge.classList.add('d-none');
+        }
+    });
+
+    // Update navbar heart icon between outline and filled
+    const navHearts = document.querySelectorAll('a[title="Saved Favorites"] i');
+    navHearts.forEach(navHeart => {
+        if (count > 0) {
+            navHeart.classList.remove('bi-heart');
+            navHeart.classList.add('bi-heart-fill');
+        } else {
+            navHeart.classList.remove('bi-heart-fill');
+            navHeart.classList.add('bi-heart');
         }
     });
 }
 
 // Global AJAX addToCart handler
-async function addToCart(productId, quantity = 1) {
+const inFlightCartOperations = new Set();
+
+async function addToCart(productId, quantity = 1, triggerBtn = null) {
+    if (inFlightCartOperations.has(productId)) {
+        return;
+    }
+
+    inFlightCartOperations.add(productId);
+    if (triggerBtn) {
+        triggerBtn.disabled = true;
+        triggerBtn.classList.add('opacity-75');
+    }
     try {
         const formData = new FormData();
         formData.append('productId', productId);
@@ -92,6 +116,14 @@ async function addToCart(productId, quantity = 1) {
         }
     } catch (err) {
         showNexusToast('An error occurred while adding to cart.', 'danger');
+    } finally {
+        setTimeout(() => {
+            inFlightCartOperations.delete(productId);
+            if (triggerBtn) {
+                triggerBtn.disabled = false;
+                triggerBtn.classList.remove('opacity-75');
+            }
+        }, 350);
     }
 }
 
@@ -124,10 +156,22 @@ async function toggleWishlist(productId) {
             if (data.success) {
                 updateWishlistBadge(data.wishlistCount);
                 showNexusToast(data.message, 'success');
-                const heartBtn = document.querySelector(`[data-product-id="${productId}"].btn-wishlist-toggle`);
-                if (heartBtn) {
-                    heartBtn.classList.toggle('text-danger', data.isAdded);
-                }
+                const heartBtns = document.querySelectorAll(`[data-product-id="${productId}"].btn-wishlist-toggle`);
+                heartBtns.forEach(heartBtn => {
+                    heartBtn.classList.toggle('active', data.isAdded);
+                    heartBtn.classList.toggle('border-danger', data.isAdded);
+                    heartBtn.title = data.isAdded ? 'Remove from Wishlist' : 'Add to Wishlist';
+                    const icon = heartBtn.querySelector('i');
+                    if (icon) {
+                        if (data.isAdded) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                        } else {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                        }
+                    }
+                });
             } else {
                 showNexusToast(data.message || 'Could not update wishlist.', 'danger');
             }
@@ -141,6 +185,26 @@ async function toggleWishlist(productId) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Sync cart badge on page load
+    fetch('/Cart/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && typeof data.count === 'number') {
+                updateCartBadge(data.count);
+            }
+        })
+        .catch(() => {});
+
+    // Sync wishlist badge on page load
+    fetch('/Wishlist/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && typeof data.count === 'number') {
+                updateWishlistBadge(data.count);
+            }
+        })
+        .catch(() => {});
+
     // Delegated click handler for Add to Cart & Wishlist buttons
     document.addEventListener('click', (e) => {
         const cartBtn = e.target.closest('.btn-add-cart');
@@ -150,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (productId) {
                 const qtyInput = document.getElementById('purchaseQty');
                 const qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
-                addToCart(productId, qty);
+                addToCart(productId, qty, cartBtn);
             }
             return;
         }

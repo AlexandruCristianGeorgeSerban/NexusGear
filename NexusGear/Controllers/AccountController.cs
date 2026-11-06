@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using NexusGear.Data;
 using NexusGear.Models;
 using NexusGear.ViewModels;
+using NexusGear.Services;
+using NexusGear.Services.Interfaces;
 
 namespace NexusGear.Controllers;
 
@@ -14,11 +16,13 @@ public class AccountController : Controller
 {
     private readonly AppDbContext _context;
     private readonly ILogger<AccountController> _logger;
+    private readonly ICartService? _cartService;
 
-    public AccountController(AppDbContext context, ILogger<AccountController> logger)
+    public AccountController(AppDbContext context, ILogger<AccountController> logger, ICartService? cartService = null)
     {
         _context = context;
         _logger = logger;
+        _cartService = cartService;
     }
 
     // =========================================================================
@@ -78,6 +82,11 @@ public class AccountController : Controller
         // Automatically sign in the registered user
         await SignInUserAsync(user, isPersistent: true);
 
+        if (_cartService != null)
+        {
+            await _cartService.MergeGuestCartIntoUserCartAsync(user.UserId);
+        }
+
         TempData["SuccessMessage"] = $"Welcome to NexusGear, {user.FullName}! Your account has been registered.";
         return RedirectToLocal(model.ReturnUrl, fallbackAction: "Profile");
     }
@@ -119,6 +128,11 @@ public class AccountController : Controller
         }
 
         await SignInUserAsync(user, model.RememberMe);
+
+        if (_cartService != null)
+        {
+            await _cartService.MergeGuestCartIntoUserCartAsync(user.UserId);
+        }
 
         _logger.LogInformation("User logged in successfully: {Email} (Role: {Role})", user.Email, user.Role);
 

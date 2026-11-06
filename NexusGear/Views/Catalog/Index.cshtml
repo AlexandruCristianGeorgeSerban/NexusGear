@@ -1,8 +1,19 @@
 @model NexusGear.ViewModels.CatalogIndexViewModel
+@inject NexusGear.Services.Interfaces.IWishlistService WishlistService
 @{
     ViewData["Title"] = !string.IsNullOrWhiteSpace(Model.SelectedCategoryName)
         ? $"{Model.SelectedCategoryName} - Catalog"
         : "Hardware Catalog";
+
+    var userWishlistIds = new HashSet<int>();
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var uidClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(uidClaim, out var uid))
+        {
+            userWishlistIds = await WishlistService.GetUserWishlistProductIdsAsync(uid);
+        }
+    }
 }
 
 <div class="container py-4">
@@ -274,10 +285,10 @@
                                         <div class="d-flex gap-2">
                                             <!-- Add to Wishlist Toggle (B7) -->
                                             <button type="button"
-                                                    class="btn btn-sm btn-tech p-2 btn-wishlist-toggle"
+                                                    class="btn btn-sm btn-tech p-2 btn-wishlist-toggle @(userWishlistIds.Contains(product.ProductId) ? "active border-danger" : "")"
                                                     data-product-id="@product.ProductId"
-                                                    title="Add to Wishlist">
-                                                <i class="bi bi-heart text-danger"></i>
+                                                    title="@(userWishlistIds.Contains(product.ProductId) ? "Remove from Wishlist" : "Add to Wishlist")">
+                                                <i class="bi @(userWishlistIds.Contains(product.ProductId) ? "bi-heart-fill" : "bi-heart") text-danger"></i>
                                             </button>
 
                                             <!-- Add to Cart Action (A3) -->
