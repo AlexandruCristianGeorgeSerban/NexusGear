@@ -402,12 +402,18 @@ public static class DbSeeder
             City = "Craiova",
             County = "Dolj",
             PostalCode = "200734",
-            Phone = "+40 722 123 456",
-            IsDefault = true,
-            UserId = customerUser.UserId
+            Phone = "+40 722 123 456"
         };
 
         context.Addresses.Add(customerAddress);
+        await context.SaveChangesAsync();
+
+        context.UserAddresses.Add(new UserAddress
+        {
+            UserId = customerUser.UserId,
+            AddressId = customerAddress.AddressId,
+            IsDefault = true
+        });
         await context.SaveChangesAsync();
 
         // ==========================================

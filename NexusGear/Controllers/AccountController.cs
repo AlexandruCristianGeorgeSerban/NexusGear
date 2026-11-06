@@ -181,7 +181,8 @@ public class AccountController : Controller
 
         var user = await _context.Users
             .AsNoTracking()
-            .Include(u => u.Addresses)
+            .Include(u => u.UserAddresses)
+                .ThenInclude(ua => ua.Address)
             .Include(u => u.Orders)
             .Include(u => u.Reviews)
             .Include(u => u.WishlistItems)
@@ -203,18 +204,19 @@ public class AccountController : Controller
             OrdersCount = user.Orders.Count,
             ReviewsCount = user.Reviews.Count(r => !r.IsHidden),
             WishlistCount = user.WishlistItems.Count,
-            Addresses = user.Addresses
-                .OrderByDescending(a => a.IsDefault)
-                .ThenByDescending(a => a.AddressId)
-                .Select(a => new AddressItemViewModel
+            Addresses = user.UserAddresses
+                .Where(ua => ua.Address != null)
+                .OrderByDescending(ua => ua.IsDefault)
+                .ThenByDescending(ua => ua.UserAddressId)
+                .Select(ua => new AddressItemViewModel
                 {
-                    AddressId = a.AddressId,
-                    Street = a.Street,
-                    City = a.City,
-                    County = a.County,
-                    PostalCode = a.PostalCode,
-                    Phone = a.Phone,
-                    IsDefault = a.IsDefault
+                    AddressId = ua.AddressId,
+                    Street = ua.Address!.Street,
+                    City = ua.Address.City,
+                    County = ua.Address.County,
+                    PostalCode = ua.Address.PostalCode,
+                    Phone = ua.Address.Phone,
+                    IsDefault = ua.IsDefault
                 })
                 .ToList()
         };
@@ -299,35 +301,70 @@ public class AccountController : Controller
             return RedirectToAction("Profile");
         }
 
-        var hasExistingAddresses = await _context.Addresses.AnyAsync(a => a.UserId == userId.Value);
+        var hasExistingAddresses = await _context.UserAddresses.AnyAsync(ua => ua.UserId == userId.Value);
 
         // If user has no existing addresses, this one must be default
         var shouldBeDefault = model.IsDefault || !hasExistingAddresses;
 
         if (shouldBeDefault)
         {
-            var oldDefaults = await _context.Addresses
-                .Where(a => a.UserId == userId.Value && a.IsDefault)
+            var oldDefaults = await _context.UserAddresses
+                .Where(ua => ua.UserId == userId.Value && ua.IsDefault)
                 .ToListAsync();
 
-            foreach (var addr in oldDefaults)
+            foreach (var ua in oldDefaults)
             {
-                addr.IsDefault = false;
+                ua.IsDefault = false;
             }
         }
 
-        var address = new Address
-        {
-            Street = model.Street.Trim(),
-            City = model.City.Trim(),
-            County = model.County.Trim(),
-            PostalCode = model.PostalCode.Trim(),
-            Phone = model.Phone.Trim(),
-            IsDefault = shouldBeDefault,
-            UserId = userId.Value
-        };
+        var normalizedStreet = model.Street.Trim();
+        var normalizedCity = model.City.Trim();
+        var normalizedCounty = model.County.Trim();
+        var normalizedPostal = model.PostalCode.Trim();
+        var normalizedPhone = model.Phone.Trim();
 
-        _context.Addresses.Add(address);
+        // Check if an identical address already exists (sharing address entity via M:N HAS_ADDRESS)
+        var address = await _context.Addresses.FirstOrDefaultAsync(a =>
+            a.Street.ToLower() == normalizedStreet.ToLower() &&
+            a.City.ToLower() == normalizedCity.ToLower() &&
+            a.County.ToLower() == normalizedCounty.ToLower() &&
+            a.PostalCode.ToLower() == normalizedPostal.ToLower() &&
+            a.Phone == normalizedPhone);
+
+        if (address == null)
+        {
+            address = new Address
+            {
+                Street = normalizedStreet,
+                City = normalizedCity,
+                County = normalizedCounty,
+                PostalCode = normalizedPostal,
+                Phone = normalizedPhone
+            };
+
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+        }
+
+        var userAddress = await _context.UserAddresses
+            .FirstOrDefaultAsync(ua => ua.UserId == userId.Value && ua.AddressId == address.AddressId);
+
+        if (userAddress == null)
+        {
+            userAddress = new UserAddress
+            {
+                UserId = userId.Value,
+                AddressId = address.AddressId,
+                IsDefault = shouldBeDefault
+            };
+            _context.UserAddresses.Add(userAddress);
+        }
+        else if (shouldBeDefault)
+        {
+            userAddress.IsDefault = true;
+        }
+
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "New delivery address saved to your address book.";
@@ -342,22 +379,20 @@ public class AccountController : Controller
         var userId = GetCurrentUserId();
         if (userId == null) return Challenge();
 
-        var targetAddress = await _context.Addresses
-            .FirstOrDefaultAsync(a => a.AddressId == id && a.UserId == userId.Value);
+        var userAddresses = await _context.UserAddresses
+            .Where(ua => ua.UserId == userId.Value)
+            .ToListAsync();
 
-        if (targetAddress == null)
+        var target = userAddresses.FirstOrDefault(ua => ua.AddressId == id);
+        if (target == null)
         {
             TempData["ErrorMessage"] = "Address not found.";
             return RedirectToAction("Profile");
         }
 
-        var userAddresses = await _context.Addresses
-            .Where(a => a.UserId == userId.Value)
-            .ToListAsync();
-
-        foreach (var addr in userAddresses)
+        foreach (var ua in userAddresses)
         {
-            addr.IsDefault = (addr.AddressId == id);
+            ua.IsDefault = (ua.AddressId == id);
         }
 
         await _context.SaveChangesAsync();
@@ -374,33 +409,43 @@ public class AccountController : Controller
         var userId = GetCurrentUserId();
         if (userId == null) return Challenge();
 
-        var address = await _context.Addresses
-            .FirstOrDefaultAsync(a => a.AddressId == id && a.UserId == userId.Value);
+        var userAddress = await _context.UserAddresses
+            .Include(ua => ua.Address)
+            .FirstOrDefaultAsync(ua => ua.AddressId == id && ua.UserId == userId.Value);
 
-        if (address == null)
+        if (userAddress == null)
         {
             TempData["ErrorMessage"] = "Address not found.";
             return RedirectToAction("Profile");
         }
 
-        // Prevent deletion if address is linked to past orders (foreign key integrity)
-        var hasOrders = await _context.Orders.AnyAsync(o => o.AddressId == id);
-        if (hasOrders)
+        // Prevent deletion if user has past orders placed to this address
+        var hasUserOrders = await _context.Orders.AnyAsync(o => o.AddressId == id && o.UserId == userId.Value);
+        if (hasUserOrders)
         {
             TempData["ErrorMessage"] = "Cannot remove this address because it is associated with past orders.";
             return RedirectToAction("Profile");
         }
 
-        bool wasDefault = address.IsDefault;
-        _context.Addresses.Remove(address);
+        bool wasDefault = userAddress.IsDefault;
+        _context.UserAddresses.Remove(userAddress);
         await _context.SaveChangesAsync();
+
+        // Check if the physical address is still referenced by other users or orders
+        var isStillUsed = await _context.UserAddresses.AnyAsync(ua => ua.AddressId == id) ||
+                          await _context.Orders.AnyAsync(o => o.AddressId == id);
+        if (!isStillUsed && userAddress.Address != null)
+        {
+            _context.Addresses.Remove(userAddress.Address);
+            await _context.SaveChangesAsync();
+        }
 
         // If the removed address was default, promote the first remaining address to default
         if (wasDefault)
         {
-            var remaining = await _context.Addresses
-                .Where(a => a.UserId == userId.Value)
-                .OrderByDescending(a => a.AddressId)
+            var remaining = await _context.UserAddresses
+                .Where(ua => ua.UserId == userId.Value)
+                .OrderByDescending(ua => ua.UserAddressId)
                 .FirstOrDefaultAsync();
 
             if (remaining != null)

@@ -28,13 +28,7 @@ public class Address
     [StringLength(30)]
     public string Phone { get; set; } = string.Empty;
 
-    public bool IsDefault { get; set; } = false;
-
-    [Required]
-    public int UserId { get; set; }
-
     // Navigation properties
-    public User? User { get; set; }
+    public ICollection<UserAddress> UserAddresses { get; set; } = new List<UserAddress>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }
-

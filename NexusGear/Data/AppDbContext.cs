@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
     public DbSet<DiscountCode> DiscountCodes => Set<DiscountCode>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -51,6 +52,7 @@ public class AppDbContext : DbContext
         // 4. CartItem
         modelBuilder.Entity<CartItem>(entity =>
         {
+            entity.ToTable("IN_CART");
             entity.HasIndex(ci => new { ci.UserId, ci.ProductId }).IsUnique();
 
             entity.HasOne(ci => ci.User)
@@ -67,6 +69,7 @@ public class AppDbContext : DbContext
         // 5. WishlistItem
         modelBuilder.Entity<WishlistItem>(entity =>
         {
+            entity.ToTable("IN_WISHLIST");
             entity.HasIndex(wi => new { wi.UserId, wi.ProductId }).IsUnique();
 
             entity.HasOne(wi => wi.User)
@@ -83,6 +86,8 @@ public class AppDbContext : DbContext
         // 6. Review
         modelBuilder.Entity<Review>(entity =>
         {
+            entity.ToTable("REVIEWS");
+
             entity.HasOne(r => r.User)
                   .WithMany(u => u.Reviews)
                   .HasForeignKey(r => r.UserId)
@@ -97,20 +102,35 @@ public class AppDbContext : DbContext
         // 7. Address
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasOne(a => a.User)
-                  .WithMany(u => u.Addresses)
-                  .HasForeignKey(a => a.UserId)
+            // Address stands on its own; linked to Users via UserAddress (HAS_ADDRESS)
+            // and to Orders via Order.AddressId (SHIPS_TO)
+        });
+
+        // 8. UserAddress
+        modelBuilder.Entity<UserAddress>(entity =>
+        {
+            entity.ToTable("HAS_ADDRESS");
+            entity.HasIndex(ua => new { ua.UserId, ua.AddressId }).IsUnique();
+
+            entity.HasOne(ua => ua.User)
+                  .WithMany(u => u.UserAddresses)
+                  .HasForeignKey(ua => ua.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(ua => ua.Address)
+                  .WithMany(a => a.UserAddresses)
+                  .HasForeignKey(ua => ua.AddressId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // 8. DiscountCode
+        // 9. DiscountCode
         modelBuilder.Entity<DiscountCode>(entity =>
         {
             entity.HasIndex(d => d.Code).IsUnique();
             entity.Property(d => d.DiscountValue).HasPrecision(18, 2);
         });
 
-        // 9. Order
+        // 10. Order
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasIndex(o => o.OrderNumber).IsUnique();
@@ -134,9 +154,10 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // 10. OrderItem
+        // 11. OrderItem
         modelBuilder.Entity<OrderItem>(entity =>
         {
+            entity.ToTable("CONTAINS");
             entity.Property(oi => oi.UnitPrice).HasPrecision(18, 2);
 
             entity.HasOne(oi => oi.Order)
@@ -151,4 +172,3 @@ public class AppDbContext : DbContext
         });
     }
 }
-

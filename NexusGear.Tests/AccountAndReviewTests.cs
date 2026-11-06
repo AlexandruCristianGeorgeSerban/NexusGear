@@ -55,41 +55,41 @@ public class AccountAndReviewTests
         var address1 = new Address
         {
             AddressId = 1,
-            UserId = 1,
             Street = "Bulevardul Decebal Nr. 10",
             City = "Craiova",
             County = "Dolj",
             PostalCode = "200734",
-            Phone = "+40 722 123 456",
-            IsDefault = true
+            Phone = "+40 722 123 456"
         };
 
         // Addresses for User 2 without orders (for deletion tests)
         var address2 = new Address
         {
             AddressId = 2,
-            UserId = 2,
             Street = "Strada Primaverii Nr. 1",
             City = "Bucuresti",
             County = "Sector 1",
             PostalCode = "010001",
-            Phone = "+40 733 111 222",
-            IsDefault = true
+            Phone = "+40 733 111 222"
         };
 
         var address3 = new Address
         {
             AddressId = 3,
-            UserId = 2,
             Street = "Aleea Rozelor Nr. 5",
             City = "Craiova",
             County = "Dolj",
             PostalCode = "200100",
-            Phone = "+40 744 333 444",
-            IsDefault = false
+            Phone = "+40 744 333 444"
         };
 
         context.Addresses.AddRange(address1, address2, address3);
+
+        context.UserAddresses.AddRange(
+            new UserAddress { UserAddressId = 1, UserId = 1, AddressId = 1, IsDefault = true },
+            new UserAddress { UserAddressId = 2, UserId = 2, AddressId = 2, IsDefault = true },
+            new UserAddress { UserAddressId = 3, UserId = 2, AddressId = 3, IsDefault = false }
+        );
 
         var category = new Category
         {
@@ -374,11 +374,14 @@ public class AccountAndReviewTests
         var redirectResult = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Profile", redirectResult.ActionName);
 
-        var userAddresses = await context.Addresses.Where(a => a.UserId == 1).ToListAsync();
+        var userAddresses = await context.UserAddresses
+            .Include(ua => ua.Address)
+            .Where(ua => ua.UserId == 1)
+            .ToListAsync();
         Assert.Equal(2, userAddresses.Count);
 
-        var oldAddress = userAddresses.First(a => a.AddressId == 1);
-        var addedAddress = userAddresses.First(a => a.Street == "Strada Victoriei Nr. 45");
+        var oldAddress = userAddresses.First(ua => ua.AddressId == 1);
+        var addedAddress = userAddresses.First(ua => ua.Address!.Street == "Strada Victoriei Nr. 45");
 
         Assert.False(oldAddress.IsDefault);
         Assert.True(addedAddress.IsDefault);
@@ -399,7 +402,7 @@ public class AccountAndReviewTests
         var redirectResult = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Profile", redirectResult.ActionName);
 
-        var remaining = await context.Addresses.FirstOrDefaultAsync(a => a.UserId == 2);
+        var remaining = await context.UserAddresses.FirstOrDefaultAsync(ua => ua.UserId == 2);
         Assert.NotNull(remaining);
         Assert.Equal(3, remaining.AddressId);
         Assert.True(remaining.IsDefault); // Promoted to default
@@ -424,6 +427,48 @@ public class AccountAndReviewTests
         var addressStillExists = await context.Addresses.AnyAsync(a => a.AddressId == 1);
         Assert.True(addressStillExists);
         Assert.Equal("Cannot remove this address because it is associated with past orders.", controller.TempData["ErrorMessage"]);
+    }
+
+    [Fact]
+    public async Task AddressBook_MultipleUsersCanShareSamePhysicalAddress_WithIndependentDefaultFlags()
+    {
+        // Arrange
+        using var context = CreateInMemoryDbContext(nameof(AddressBook_MultipleUsersCanShareSamePhysicalAddress_WithIndependentDefaultFlags));
+        var (controllerUser2, _) = SetupAccountController(context, userId: 2);
+
+        // User 2 adds the exact same physical address as User 1 (Bulevardul Decebal Nr. 10)
+        // but User 2 sets IsDefault = false
+        var sharedAddressInput = new AddressInputViewModel
+        {
+            Street = "Bulevardul Decebal Nr. 10",
+            City = "Craiova",
+            County = "Dolj",
+            PostalCode = "200734",
+            Phone = "+40 722 123 456",
+            IsDefault = false
+        };
+
+        // Act
+        var result = await controllerUser2.AddAddress(sharedAddressInput);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Profile", redirectResult.ActionName);
+
+        // Physical address count should NOT increase (AddressId 1 is reused)
+        var addresses = await context.Addresses.Where(a => a.Street == "Bulevardul Decebal Nr. 10").ToListAsync();
+        Assert.Single(addresses);
+
+        // Both User 1 and User 2 now link to Address 1 via HAS_ADDRESS
+        var user1Link = await context.UserAddresses.FirstOrDefaultAsync(ua => ua.UserId == 1 && ua.AddressId == 1);
+        var user2Link = await context.UserAddresses.FirstOrDefaultAsync(ua => ua.UserId == 2 && ua.AddressId == 1);
+
+        Assert.NotNull(user1Link);
+        Assert.NotNull(user2Link);
+
+        // User 1 has it as default, User 2 has it as non-default
+        Assert.True(user1Link.IsDefault);
+        Assert.False(user2Link.IsDefault);
     }
 
     // =========================================================================
