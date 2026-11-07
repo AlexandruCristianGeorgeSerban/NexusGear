@@ -1,0 +1,108 @@
+@model NexusGear.ViewModels.RoadmapPreviewViewModel
+@{
+    ViewData["Title"] = Model.ModuleTitle + " — Stage 3 Roadmap";
+}
+
+<div class="container py-5 my-3">
+    <!-- Breadcrumb navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-mint text-decoration-none"><i class="bi bi-house-door-fill"></i> Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index" class="text-mint text-decoration-none">Catalog</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">@Model.ModuleTitle</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <!-- Main Hero Card -->
+            <div class="nexus-card-static p-4 p-md-5 position-relative overflow-hidden mb-4 border border-secondary border-opacity-50">
+                <!-- Glowing corner accent -->
+                <div class="position-absolute top-0 end-0 p-3 opacity-25 d-none d-md-block">
+                    <i class="bi @Model.IconClass" style="font-size: 8rem; color: var(--color-mint); filter: blur(2px);"></i>
+                </div>
+
+                <div class="position-relative" style="z-index: 2;">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <span class="badge badge-mint px-3 py-2 fw-bold text-uppercase tracking-wider">
+                            <i class="bi bi-calendar3 me-1"></i> @Model.StageBadge
+                        </span>
+                        <span class="badge bg-dark text-info border border-info border-opacity-25 px-3 py-2 fw-semibold">
+                            <i class="bi bi-shield-lock me-1"></i> Specification Approved
+                        </span>
+                    </div>
+
+                    <h1 class="display-6 fw-bold text-white mb-2 d-flex align-items-center gap-3">
+                        <i class="bi @Model.IconClass text-mint"></i>
+                        <span>@Model.ModuleTitle</span>
+                    </h1>
+
+                    <p class="text-muted fs-5 mb-4" style="max-width: 680px;">
+                        @Model.Subtitle
+                    </p>
+
+                    <!-- Requirements badges -->
+                    <div class="mb-4">
+                        <span class="text-muted small text-uppercase tracking-wider d-block mb-2 fw-bold">Academic Requirements Covered:</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var tag in Model.RequirementTags)
+                            {
+                                <span class="badge bg-secondary bg-opacity-25 border border-secondary text-white py-2 px-3 fw-semibold">
+                                    <i class="bi bi-check2-circle text-mint me-1"></i> @tag
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <hr class="border-secondary border-opacity-50 my-4" />
+
+                    <!-- Implementation Plan Grid -->
+                    <h2 class="h5 fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-diagram-3 text-info"></i> Planned Technical Architecture & Deliverables
+                    </h2>
+
+                    <div class="row g-3 mb-4">
+                        @foreach (var feature in Model.PlannedFeatures)
+                        {
+                            <div class="col-md-6">
+                                <div class="p-3 rounded bg-dark bg-opacity-50 border border-secondary border-opacity-25 h-100 d-flex align-items-start gap-2">
+                                    <i class="bi bi-arrow-right-circle-fill text-mint mt-1 flex-shrink-0"></i>
+                                    <span class="text-muted small">@feature</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Callout Info Box -->
+                    <div class="p-3 rounded bg-secondary bg-opacity-10 border-start border-4 border-mint mb-4">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-info-circle-fill text-mint flex-shrink-0 mt-1"></i>
+                            <div class="text-muted small">
+                                <strong class="text-white">Milestone Boundary Notice:</strong> As specified in the E-Commerce Course Guidelines (Section 3.2), this module is slated for implementation during Stage 3 (Weeks 8–12). The database schema, domain models, and service interfaces have already been modeled and verified.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="@Model.PrimaryActionUrl" class="btn btn-tech py-2 px-4 fw-bold">
+                            <i class="bi bi-grid-fill me-1"></i> @Model.PrimaryActionText
+                        </a>
+
+                        @if (!string.IsNullOrEmpty(Model.SecondaryActionUrl))
+                        {
+                            <a href="@Model.SecondaryActionUrl" class="btn btn-outline-secondary py-2 px-4 text-white">
+                                @Model.SecondaryActionText
+                            </a>
+                        }
+
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-link text-muted text-decoration-none py-2 px-3">
+                            Return to Homepage
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

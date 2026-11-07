@@ -1,25 +1,62 @@
-﻿@model ErrorViewModel
+@model ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = $"{Model.StatusCode} — {Model.Title}";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="container py-5 my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7 text-center">
+            <!-- Glowing Error Code Badge -->
+            <div class="mb-4">
+                <span class="display-1 fw-bold font-monospace d-inline-block text-mint" style="text-shadow: 0 0 25px rgba(0, 229, 163, 0.4); letter-spacing: -2px;">
+                    @Model.StatusCode
+                </span>
+                <div class="text-uppercase tracking-wider small fw-bold text-muted mt-1">
+                    // SYSTEM STATUS CODE @Model.StatusCode
+                </div>
+            </div>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+            <!-- Error Title & Description -->
+            <h1 class="h2 fw-bold text-white mb-3">
+                @Model.Title
+            </h1>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+            <p class="text-muted fs-5 mb-4 mx-auto" style="max-width: 580px;">
+                @Model.Description
+            </p>
+
+            <!-- Interactive Search Box directly in 404 page -->
+            <div class="card bg-dark border-secondary border-opacity-50 p-4 mb-4 mx-auto text-start" style="max-width: 540px;">
+                <label for="errorSearchInput" class="form-label text-white small fw-bold mb-2">
+                    <i class="bi bi-search text-mint me-1"></i> Search NexusGear Peripherals
+                </label>
+                <form method="get" asp-controller="Catalog" asp-action="Index" class="d-flex gap-2">
+                    <input type="text" id="errorSearchInput" name="searchTerm" class="form-control nexus-input text-white" placeholder="e.g. keyboard, mouse, deskmat, chair..." />
+                    <button type="submit" class="btn btn-mint px-4 fw-bold">
+                        Search
+                    </button>
+                </form>
+            </div>
+
+            <!-- Quick Action Links -->
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <a asp-controller="Catalog" asp-action="Index" class="btn btn-tech py-2 px-4 fw-bold">
+                    <i class="bi bi-grid-fill me-1"></i> Browse Catalog
+                </a>
+                <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary py-2 px-4 text-white">
+                    <i class="bi bi-cart3 me-1"></i> View Cart
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-link text-muted text-decoration-none py-2 px-3">
+                    Return to Home
+                </a>
+            </div>
+
+            @if (Model.ShowRequestId)
+            {
+                <div class="mt-5 pt-4 border-top border-secondary border-opacity-25 small text-muted font-monospace">
+                    Diagnostic Trace Identifier: <code>@Model.RequestId</code>
+                </div>
+            }
+        </div>
+    </div>
+</div>

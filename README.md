@@ -53,7 +53,7 @@ dotnet run --project NexusGear
 * **Database**: SQLite via Entity Framework Core with Fluent API, migrations, and deterministic seed scripts (30 original products across 4 categories: Mechanical Keyboards, Gaming Mice, Deskmats & Mousepads, and Ergonomic Gaming Chairs) with photorealistic AI product assets.
 * **Payment Gateway**: Stripe (Sandbox/Test Mode) utilizing verified asynchronous server-side webhooks (`checkout.session.completed`) and atomic inventory reduction.
 * **Email Testing**: Transactional HTML order confirmations sent through Mailtrap SMTP.
-* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, and multi-user address sharing (48 automated unit tests).
+* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, multi-user address sharing, roadmap module routing, and custom error handling (53 automated unit tests).
 
 ---
 

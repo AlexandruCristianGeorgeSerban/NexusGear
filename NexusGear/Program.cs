@@ -88,6 +88,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Friendly Dark Tech error pages for 404, 403, 500 status codes
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
