@@ -44,6 +44,11 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        if (!model.AcceptTerms)
+        {
+            ModelState.AddModelError(nameof(model.AcceptTerms), "You must agree to the Privacy Policy to create an account.");
+        }
+
         if (!ModelState.IsValid)
         {
             return View(model);

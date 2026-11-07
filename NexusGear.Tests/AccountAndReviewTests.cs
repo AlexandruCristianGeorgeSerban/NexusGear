@@ -34,7 +34,7 @@ public class AccountAndReviewTests
         {
             UserId = 1,
             Email = "customer@nexusgear.ro",
-            FullName = "Alexandru Customer",
+            FullName = "Gear Customer",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Customer123!"),
             Role = "Customer",
             CreatedAt = DateTime.UtcNow.AddDays(-30)

@@ -1,6 +1,30 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace NexusGear.ViewModels;
+
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public class MustBeTrueAttribute : ValidationAttribute, IClientModelValidator
+{
+    public override bool IsValid(object? value)
+    {
+        return value is bool b && b;
+    }
+
+    public void AddValidation(ClientModelValidationContext context)
+    {
+        if (context == null) throw new ArgumentNullException(nameof(context));
+        MergeAttribute(context.Attributes, "data-val", "true");
+        MergeAttribute(context.Attributes, "data-val-mustbetrue", FormatErrorMessage(context.ModelMetadata.GetDisplayName()));
+    }
+
+    private static bool MergeAttribute(IDictionary<string, string> attributes, string key, string value)
+    {
+        if (attributes.ContainsKey(key)) return false;
+        attributes.Add(key, value);
+        return true;
+    }
+}
 
 public class RegisterViewModel
 {
@@ -27,7 +51,8 @@ public class RegisterViewModel
     [Display(Name = "Confirm Password")]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to the Privacy Policy to create an account.")]
+    [MustBeTrue(ErrorMessage = "You must agree to the Privacy Policy to create an account.")]
+    [Display(Name = "Accept Terms and Privacy Policy")]
     public bool AcceptTerms { get; set; }
 
     public string? ReturnUrl { get; set; }
