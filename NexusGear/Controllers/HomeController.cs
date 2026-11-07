@@ -17,8 +17,17 @@ public class HomeController : Controller
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
+    public IActionResult Error(int? statusCode = null)
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var effectiveStatusCode = statusCode ?? HttpContext.Response.StatusCode;
+        if (effectiveStatusCode == 200) effectiveStatusCode = 404;
+
+        var model = new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+            StatusCode = effectiveStatusCode
+        };
+
+        return View(model);
     }
 }
