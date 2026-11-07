@@ -1,5 +1,13 @@
 // NexusGear Client Interaction & AJAX Core (A3, B7, A11)
 
+// Register custom unobtrusive validation rules (e.g. MustBeTrue on terms checkbox)
+if (window.jQuery && window.jQuery.validator && window.jQuery.validator.unobtrusive) {
+    jQuery.validator.addMethod("mustbetrue", function (value, element) {
+        return element.checked;
+    });
+    jQuery.validator.unobtrusive.adapters.addBool("mustbetrue");
+}
+
 function showNexusToast(message, type = 'success') {
     let container = document.getElementById('nexus-toast-container');
     if (!container) {

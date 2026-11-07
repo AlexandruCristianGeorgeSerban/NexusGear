@@ -384,7 +384,7 @@ public static class DbSeeder
         var customerUser = new User
         {
             Email = "customer@nexusgear.ro",
-            FullName = "Alexandru Customer",
+            FullName = "Gear Customer",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Customer123!"),
             Role = "Customer",
             CreatedAt = DateTime.UtcNow.AddDays(-30)

@@ -48,7 +48,7 @@
                             <label asp-for="Password" class="form-label-nexus">
                                 <i class="bi bi-shield-lock-fill me-1 text-info"></i> Password
                             </label>
-                            <input asp-for="Password" class="form-control form-control-nexus" placeholder="••••••••" autocomplete="new-password" />
+                            <input asp-for="Password" value="@Model?.Password" class="form-control form-control-nexus" placeholder="••••••••" autocomplete="new-password" />
                             <span asp-validation-for="Password" class="text-danger small mt-1 d-block"></span>
                         </div>
 
@@ -57,7 +57,7 @@
                             <label asp-for="ConfirmPassword" class="form-label-nexus">
                                 <i class="bi bi-shield-check me-1 text-info"></i> Confirm Password
                             </label>
-                            <input asp-for="ConfirmPassword" class="form-control form-control-nexus" placeholder="••••••••" autocomplete="new-password" />
+                            <input asp-for="ConfirmPassword" value="@Model?.ConfirmPassword" class="form-control form-control-nexus" placeholder="••••••••" autocomplete="new-password" />
                             <span asp-validation-for="ConfirmPassword" class="text-danger small mt-1 d-block"></span>
                         </div>
                     </div>
@@ -68,7 +68,7 @@
 
                     <!-- Terms & Privacy Checkbox -->
                     <div class="form-check mb-4">
-                        <input asp-for="AcceptTerms" class="form-check-input" />
+                        <input asp-for="AcceptTerms" class="form-check-input" type="checkbox" />
                         <label asp-for="AcceptTerms" class="form-check-label text-muted small">
                             I accept the <a asp-controller="Home" asp-action="Privacy" target="_blank" class="text-mint text-decoration-none">Privacy Policy</a> and agree to data handling under EU GDPR standards.
                         </label>
@@ -97,5 +97,13 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        if (window.jQuery && window.jQuery.validator && window.jQuery.validator.unobtrusive) {
+            jQuery.validator.addMethod("mustbetrue", function (value, element) {
+                return element.checked;
+            });
+            jQuery.validator.unobtrusive.adapters.addBool("mustbetrue");
+        }
+    </script>
 }
 
