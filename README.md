@@ -84,7 +84,7 @@ dotnet run --project NexusGear
 | **B2** | **Recommendations** (dynamic "Frequently bought together" and "Similar products") | Popa-Ion Andrei | P3 (Week 11) | Complete |
 | **B3** | **Reviews and ratings** (verified buyers only, avg rating, admin moderation) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
 | **B4** | **Sales dashboard** (daily sales chart, top 5 products, AOV, time filters) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Planned |
-| **B5** | **Discount codes** (% or fixed amount, expiry date, max uses, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Planned |
+| **B5** | **Discount codes** (% or fixed amount, expiry date, max uses, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Seeded / P3 |
 | **B6** | **Transactional email** (order confirmation via Mailtrap SMTP) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Planned |
 | **B7** | **Wishlist** (favorites for authenticated users, move to cart) | Popa-Ion Andrei | P3 (Week 8) | Complete |
 
@@ -106,5 +106,6 @@ As required by the course specification, the following AI tools were utilized du
 
 As required by the course specification, the following AI tools were utilized during Stage 2:
 
-* **Google Gemini (Antigravity)**: Assisting with architectural scaffolding of the .NET 10 monolithic web solution, configuring modern `.slnx` solution format, designing relational database entities matching RM/ERD specifications, implementing catalog search/filtering/recommendation algorithms, and writing automated xUnit tests.
-* **Google Gemini**: Generating 30 photorealistic product catalog assets (`Product_1.png` – `Product_30.png`) for mechanical keyboards, gaming mice, deskmats, and ergonomic gaming chairs to deliver a modern, premium e-commerce visual identity.
+* **Antigravity IDE & Google Gemini**: Assisting with the architectural scaffolding of the ASP.NET Core (.NET 10 MVC) layered monolith, configuring the modern `.slnx` solution format, implementing the 3NF relational database entities (11 tables including the `HAS_ADDRESS` M:N address book, `RepositoryWrapper`, and `Unit of Work`), developing the catalog search/filtering/recommendation algorithms, and writing the 53 automated xUnit tests (`NexusGear.Tests`).
+* **Google Gemini**: Generating 30 photorealistic studio product illustrations (`Product_1.png` – `Product_30.png`) across all 4 store categories (mechanical keyboards, gaming mice, deskmats, and ergonomic gaming chairs) to deliver a cohesive "Dark Tech" visual identity.
+* **OpenAI ChatGPT & Google Gemini**: Assisting with specification consistency analysis, refining technical documentation formatting, and structuring the P2 presentation and 8-page technical specification report.
