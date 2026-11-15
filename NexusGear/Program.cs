@@ -57,10 +57,14 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IDiscountRepository, DiscountRepository>();
 
-// Services (A3, B7 Architecture)
+// Services (A3, B7, A5, B5 Architecture)
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IWishlistService, WishlistService>();
+builder.Services.AddScoped<IDiscountService, DiscountService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 
 // ==============================================================================
 // 3. Application Pipeline Configuration
