@@ -1,12 +1,101 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NexusGear.Services.Interfaces;
 using NexusGear.ViewModels;
 
 namespace NexusGear.Controllers;
 
+[Authorize]
 public class CheckoutController : Controller
 {
+    private readonly ICheckoutService _checkoutService;
+
+    public CheckoutController(ICheckoutService? checkoutService = null)
+    {
+        _checkoutService = checkoutService!;
+    }
+
+    private int? GetCurrentUserId()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(idClaim, out var id) ? id : null;
+    }
+
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index([FromQuery] string? shippingMethod, [FromQuery] string? coupon)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var model = await _checkoutService.PrepareCheckoutViewModelAsync(userId.Value, shippingMethod, coupon);
+
+        if (model.Items.Count == 0)
+        {
+            TempData["ErrorMessage"] = "Your cart is empty. Add gaming gear before checking out.";
+            return RedirectToAction("Index", "Cart");
+        }
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApplyDiscount([FromBody] ApplyDiscountDto request)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null)
+        {
+            return Unauthorized(new { isValid = false, message = "Please sign in to apply promo codes." });
+        }
+
+        if (string.IsNullOrWhiteSpace(request?.Code))
+        {
+            return BadRequest(new { isValid = false, message = "Please provide a promo code." });
+        }
+
+        var result = await _checkoutService.ApplyCouponAsync(userId.Value, request.Code, request.ShippingMethod ?? "Standard Courier");
+        return Json(result);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PlaceOrder(PlaceOrderRequest request)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var result = await _checkoutService.PlaceOrderAsync(userId.Value, request);
+
+        if (!result.Success)
+        {
+            TempData["ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(Index), new { shippingMethod = request.ShippingMethod, coupon = request.DiscountCode });
+        }
+
+        TempData["SuccessMessage"] = $"Order {result.OrderNumber} placed successfully!";
+        return RedirectToAction(nameof(Confirmation), new { id = result.OrderId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Confirmation(int id)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var model = await _checkoutService.GetOrderConfirmationAsync(id, userId.Value);
+        if (model == null)
+        {
+            TempData["ErrorMessage"] = "Order not found or unauthorized.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        return View(model);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("Checkout/Roadmap")]
+    public IActionResult Roadmap()
     {
         var model = new RoadmapPreviewViewModel
         {
@@ -41,3 +130,8 @@ public class CheckoutController : Controller
     }
 }
 
+public class ApplyDiscountDto
+{
+    public string? Code { get; set; }
+    public string? ShippingMethod { get; set; }
+}
