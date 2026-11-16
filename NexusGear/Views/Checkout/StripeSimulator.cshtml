@@ -1,0 +1,122 @@
+@model NexusGear.ViewModels.StripeSimulatorViewModel
+@{
+    ViewData["Title"] = "Stripe Test Mode Checkout — NexusGear";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-7">
+            <!-- Simulated Stripe Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary text-white p-2 px-3 fw-bold fs-6">stripe</span>
+                    <span class="badge bg-warning text-dark fw-bold">TEST MODE SANDBOX</span>
+                </div>
+                <div class="text-muted small">
+                    Secured by Stripe TLS 1.3
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Left: Order Summary -->
+                <div class="col-md-5 order-md-2">
+                    <div class="nexus-card-static p-4 bg-dark border-secondary border-opacity-50">
+                        <span class="text-muted small d-block mb-1">Pay NexusGear</span>
+                        <div class="h3 fw-bold text-mint mb-3">@Model.TotalAmount.ToString("N2") <span class="fs-6 text-white">RON</span></div>
+
+                        <div class="small text-muted mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Order Reference:</span>
+                                <span class="text-white font-monospace fw-bold">@Model.OrderNumber</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Courier:</span>
+                                <span class="text-white">@Model.ShippingMethod</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.DiscountCode))
+                            {
+                                <div class="d-flex justify-content-between text-mint">
+                                    <span>Voucher:</span>
+                                    <span>-@Model.DiscountAmount.ToString("N2") RON</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Items Preview -->
+                        <div class="small text-muted" style="max-height: 180px; overflow-y: auto;">
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="d-flex justify-content-between py-1">
+                                    <span class="text-truncate me-2 text-white" style="max-width: 140px;" title="@item.ProductName">@item.ProductName</span>
+                                    <span class="text-nowrap">@item.Quantity × @item.UnitPrice.ToString("N2")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Test Card Form -->
+                <div class="col-md-7 order-md-1">
+                    <div class="nexus-card-static p-4">
+                        <h2 class="h5 fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-credit-card-2-front-fill text-mint"></i> Payment Details
+                        </h2>
+
+                        <div class="alert alert-info small bg-dark border-info text-info p-2 px-3 mb-3">
+                            <i class="bi bi-info-circle me-1"></i> <strong>Sandbox Simulation:</strong> The prefilled card is Stripe's standard test Visa (<code>4242 4242 4242 4242</code>). Clicking pay will simulate the verified server-to-server webhook.
+                        </div>
+
+                        <form asp-action="SimulatePayment" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@Model.OrderId" />
+
+                            <div class="mb-3">
+                                <label class="form-label-nexus small">Email</label>
+                                <input type="email" class="form-control form-control-nexus" value="@Model.CustomerEmail" readonly />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label-nexus small">Card Number</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary border-opacity-50 text-white">
+                                        <i class="bi bi-credit-card"></i>
+                                    </span>
+                                    <input type="text" class="form-control form-control-nexus font-monospace" value="4242 •••• •••• 4242" readonly />
+                                    <span class="input-group-text bg-dark border-secondary border-opacity-50">
+                                        <span class="badge bg-primary fw-bold">VISA</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label-nexus small">Expires</label>
+                                    <input type="text" class="form-control form-control-nexus font-monospace" value="12 / 28" readonly />
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label-nexus small">CVC / CVV</label>
+                                    <input type="text" class="form-control form-control-nexus font-monospace" value="123" readonly />
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label-nexus small">Cardholder Name</label>
+                                <input type="text" class="form-control form-control-nexus" value="@Model.CustomerName" readonly />
+                            </div>
+
+                            <button type="submit" class="btn btn-tech w-100 py-3 fw-bold fs-6 mb-2">
+                                <i class="bi bi-lock-fill me-1"></i> Pay @Model.TotalAmount.ToString("N2") RON
+                            </button>
+
+                            <div class="text-center">
+                                <a asp-action="Confirmation" asp-route-id="@Model.OrderId" class="text-muted small text-decoration-none">
+                                    <i class="bi bi-arrow-left me-1"></i> Cancel and return to NexusGear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -543,6 +543,21 @@ p.lead,
   color: #FEE2E2;
 }
 
+/* Bootstrap Alert Dark Theme Overrides */
+.alert-success {
+  --bs-alert-color: #FFFFFF !important;
+  --bs-alert-bg: rgba(0, 229, 163, 0.12) !important;
+  --bs-alert-border-color: rgba(0, 229, 163, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
+.alert-danger {
+  --bs-alert-color: #FFFFFF !important;
+  --bs-alert-bg: rgba(239, 68, 68, 0.12) !important;
+  --bs-alert-border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #FFFFFF !important;
+}
+
 /* Toast container for AJAX notifications */
 #nexus-toast-container {
   position: fixed;
