@@ -10,10 +10,17 @@ namespace NexusGear.Controllers;
 public class CheckoutController : Controller
 {
     private readonly ICheckoutService _checkoutService;
+    private readonly IPaymentService _paymentService;
+    private readonly IWebhookService _webhookService;
 
-    public CheckoutController(ICheckoutService? checkoutService = null)
+    public CheckoutController(
+        ICheckoutService? checkoutService = null,
+        IPaymentService? paymentService = null,
+        IWebhookService? webhookService = null)
     {
         _checkoutService = checkoutService!;
+        _paymentService = paymentService!;
+        _webhookService = webhookService!;
     }
 
     private int? GetCurrentUserId()
@@ -91,6 +98,80 @@ public class CheckoutController : Controller
         }
 
         return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PayWithStripe(int orderId)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var result = await _paymentService.CreateCheckoutSessionAsync(orderId, userId.Value, baseUrl);
+
+        if (!result.Success || string.IsNullOrEmpty(result.RedirectUrl))
+        {
+            TempData["ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(Confirmation), new { id = orderId });
+        }
+
+        return Redirect(result.RedirectUrl);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> StripeSimulator(int id)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var order = await _checkoutService.GetOrderConfirmationAsync(id, userId.Value);
+        if (order == null)
+        {
+            TempData["ErrorMessage"] = "Order not found.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        if (order.Status == "Paid")
+        {
+            TempData["SuccessMessage"] = "Order is already paid!";
+            return RedirectToAction(nameof(Confirmation), new { id = id });
+        }
+
+        var model = new StripeSimulatorViewModel
+        {
+            OrderId = order.OrderId,
+            OrderNumber = order.OrderNumber,
+            TotalAmount = order.TotalAmount,
+            CustomerName = order.CustomerName,
+            CustomerEmail = order.CustomerEmail,
+            ShippingMethod = order.ShippingMethod,
+            ShippingCost = order.ShippingCost,
+            DiscountCode = order.DiscountCode,
+            DiscountAmount = order.DiscountAmount,
+            Items = order.Items
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SimulatePayment(int orderId)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var result = await _webhookService.ProcessOrderPaymentSuccessAsync(orderId);
+
+        if (!result.Success)
+        {
+            TempData["ErrorMessage"] = result.Message;
+            return RedirectToAction(nameof(Confirmation), new { id = orderId });
+        }
+
+        TempData["SuccessMessage"] = $"Payment for Order {result.OrderNumber} confirmed via Stripe sandbox webhook!";
+        return RedirectToAction(nameof(Confirmation), new { id = orderId });
     }
 
     [AllowAnonymous]

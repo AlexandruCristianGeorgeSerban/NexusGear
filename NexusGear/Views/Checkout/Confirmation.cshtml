@@ -17,9 +17,67 @@
                 <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded bg-dark border border-secondary border-opacity-50">
                     <span class="text-muted small">Order Reference:</span>
                     <span class="fw-bold text-mint font-monospace fs-5">@Model.OrderNumber</span>
-                    <span class="badge bg-warning text-dark fw-bold ms-2">@Model.Status</span>
+                    @if (Model.Status == "Paid")
+                    {
+                        <span class="badge bg-success text-white fw-bold ms-2"><i class="bi bi-check-circle-fill me-1"></i> Paid</span>
+                    }
+                    else if (Model.Status == "Cancelled")
+                    {
+                        <span class="badge bg-danger text-white fw-bold ms-2"><i class="bi bi-x-circle-fill me-1"></i> Cancelled</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark fw-bold ms-2"><i class="bi bi-clock-history me-1"></i> @Model.Status</span>
+                    }
                 </div>
             </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded" style="background-color: rgba(0, 229, 163, 0.15); border: 1px solid #00E5A3;" role="alert">
+                    <i class="bi bi-check-circle-fill text-mint fs-5 flex-shrink-0"></i>
+                    <div class="text-white fw-medium">@TempData["SuccessMessage"]</div>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="d-flex align-items-center gap-3 mb-4 p-3 rounded" style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid #EF4444;" role="alert">
+                    <i class="bi bi-exclamation-octagon-fill text-danger fs-5 flex-shrink-0"></i>
+                    <div class="text-white fw-medium">@TempData["ErrorMessage"]</div>
+                </div>
+            }
+
+            @if (Model.Status == "Unpaid")
+            {
+                <div class="nexus-card-static p-4 mb-4 border-warning border-opacity-50 bg-dark position-relative">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div>
+                            <div class="h5 fw-bold text-warning mb-1 d-flex align-items-center gap-2">
+                                <i class="bi bi-credit-card-2-front"></i> Action Required: Settle Order Payment
+                            </div>
+                            <p class="text-muted small mb-0">Your order has been recorded in our system as <code>Unpaid</code>. Complete payment via Stripe test sandbox to lock inventory and trigger automated fulfillment.</p>
+                        </div>
+                        <form asp-action="PayWithStripe" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@Model.OrderId" />
+                            <button type="submit" class="btn btn-tech py-2 px-4 fw-bold fs-6 d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-stripe"></i> Pay with Stripe Sandbox <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (Model.Status == "Paid")
+            {
+                <div class="rounded p-3 mb-4 d-flex align-items-center gap-3" style="background-color: rgba(0, 229, 163, 0.12); border: 1px solid #00E5A3;">
+                    <i class="bi bi-patch-check-fill text-mint fs-3 flex-shrink-0"></i>
+                    <div>
+                        <div class="text-white fw-bold mb-1">Stripe Sandbox Payment Confirmed</div>
+                        <div class="text-muted small">Your payment has been verified by the cryptographically signed webhook. Hardware stock was deducted atomically and an HTML confirmation receipt was dispatched to <span class="text-white">@Model.CustomerEmail</span>.</div>
+                    </div>
+                </div>
+            }
 
             <!-- Order Details Card -->
             <div class="nexus-card-static p-4 mb-4">
