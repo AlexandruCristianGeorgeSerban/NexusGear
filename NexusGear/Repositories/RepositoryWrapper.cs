@@ -10,6 +10,8 @@ public class RepositoryWrapper : IRepositoryWrapper
     private IWishlistRepository? _wishlist;
     private IProductRepository? _product;
     private ICategoryRepository? _category;
+    private IOrderRepository? _order;
+    private IDiscountRepository? _discountCode;
 
     public RepositoryWrapper(AppDbContext context)
     {
@@ -20,6 +22,8 @@ public class RepositoryWrapper : IRepositoryWrapper
     public IWishlistRepository Wishlist => _wishlist ??= new WishlistRepository(_context);
     public IProductRepository Product => _product ??= new ProductRepository(_context);
     public ICategoryRepository Category => _category ??= new CategoryRepository(_context);
+    public IOrderRepository Order => _order ??= new OrderRepository(_context);
+    public IDiscountRepository DiscountCode => _discountCode ??= new DiscountRepository(_context);
 
     public void Save() => _context.SaveChanges();
     public async Task SaveAsync() => await _context.SaveChangesAsync();

@@ -16,7 +16,7 @@ public class PreviewAndErrorTests
         var controller = new CheckoutController();
 
         // Act
-        var result = controller.Index();
+        var result = controller.Roadmap();
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
