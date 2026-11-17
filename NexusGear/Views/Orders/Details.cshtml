@@ -1,0 +1,264 @@
+@model NexusGear.ViewModels.OrderDetailsViewModel
+@{
+    ViewData["Title"] = $"Order {Model.OrderNumber} — NexusGear";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Orders" asp-action="Index" class="text-decoration-none text-muted">Order History</a></li>
+            <li class="breadcrumb-item active text-mint font-monospace" aria-current="page">@Model.OrderNumber</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="nexus-card-static p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-1">
+                    <h1 class="h3 fw-bold text-white mb-0 font-monospace">@Model.OrderNumber</h1>
+                    @if (Model.Status == "Paid")
+                    {
+                        <span class="badge bg-success text-white px-3 py-2 fs-6"><i class="bi bi-check-circle-fill me-1"></i> Paid</span>
+                    }
+                    else if (Model.Status == "Shipped")
+                    {
+                        <span class="badge bg-info text-dark px-3 py-2 fs-6"><i class="bi bi-truck me-1"></i> Shipped</span>
+                    }
+                    else if (Model.Status == "Delivered")
+                    {
+                        <span class="badge bg-primary text-white px-3 py-2 fs-6"><i class="bi bi-patch-check-fill me-1"></i> Delivered</span>
+                    }
+                    else if (Model.Status == "Cancelled")
+                    {
+                        <span class="badge bg-danger text-white px-3 py-2 fs-6"><i class="bi bi-x-circle-fill me-1"></i> Cancelled</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark px-3 py-2 fs-6"><i class="bi bi-clock-history me-1"></i> Unpaid</span>
+                    }
+                </div>
+                <p class="text-muted small mb-0">
+                    Placed on <span class="text-white">@Model.OrderDate.ToString("dd MMMM yyyy, HH:mm")</span> &bull; Reference ID: <span class="text-mint font-monospace">#@Model.OrderId</span>
+                </p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm px-3">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Orders
+                </a>
+                @if (Model.Status == "Unpaid")
+                {
+                    <form asp-controller="Checkout" asp-action="PayWithStripe" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@Model.OrderId" />
+                        <button type="submit" class="btn btn-tech btn-sm px-3 fw-bold">
+                            <i class="bi bi-credit-card-2-front me-1"></i> Settle Payment (Stripe)
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Delivery Progress Stepper (A8) -->
+    @if (!Model.IsCancelled)
+    {
+        <div class="nexus-card-static p-4 mb-4">
+            <h6 class="text-white fw-bold mb-4">
+                <i class="bi bi-diagram-3-fill text-mint me-2"></i> Shipment &amp; Fulfillment Timeline
+            </h6>
+
+            <div class="row text-center position-relative g-2">
+                <!-- Step 1: Order Placed -->
+                <div class="col-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 bg-success text-white shadow" style="width: 44px; height: 44px;">
+                            <i class="bi bi-receipt fs-5"></i>
+                        </div>
+                        <span class="fw-bold text-white small">Order Placed</span>
+                        <span class="text-muted very-small" style="font-size: 0.75rem;">@Model.OrderDate.ToString("dd MMM HH:mm")</span>
+                    </div>
+                </div>
+
+                <!-- Step 2: Payment Confirmed -->
+                <div class="col-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(Model.IsStepCompleted("Paid") ? "bg-success text-white shadow" : "bg-dark border border-secondary text-muted")" style="width: 44px; height: 44px;">
+                            <i class="bi bi-credit-card-2-front fs-5"></i>
+                        </div>
+                        <span class="fw-bold @(Model.IsStepCompleted("Paid") ? "text-white" : "text-muted") small">Payment Confirmed</span>
+                        <span class="text-muted very-small" style="font-size: 0.75rem;">@(Model.IsStepCompleted("Paid") ? "Stripe Verified" : "Pending")</span>
+                    </div>
+                </div>
+
+                <!-- Step 3: Shipped -->
+                <div class="col-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(Model.IsStepCompleted("Shipped") ? "bg-info text-dark shadow" : "bg-dark border border-secondary text-muted")" style="width: 44px; height: 44px;">
+                            <i class="bi bi-truck fs-5"></i>
+                        </div>
+                        <span class="fw-bold @(Model.IsStepCompleted("Shipped") ? "text-white" : "text-muted") small">Shipped</span>
+                        <span class="text-muted very-small" style="font-size: 0.75rem;">@(Model.IsStepCompleted("Shipped") ? Model.ShippingMethod : "Awaiting Dispatch")</span>
+                    </div>
+                </div>
+
+                <!-- Step 4: Delivered -->
+                <div class="col-3">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center mb-2 @(Model.IsStepCompleted("Delivered") ? "bg-primary text-white shadow" : "bg-dark border border-secondary text-muted")" style="width: 44px; height: 44px;">
+                            <i class="bi bi-house-check-fill fs-5"></i>
+                        </div>
+                        <span class="fw-bold @(Model.IsStepCompleted("Delivered") ? "text-white" : "text-muted") small">Delivered</span>
+                        <span class="text-muted very-small" style="font-size: 0.75rem;">@(Model.IsStepCompleted("Delivered") ? "Received" : "Pending")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger bg-dark border-danger text-danger d-flex align-items-center gap-3 mb-4 p-3 rounded" role="alert">
+            <i class="bi bi-x-octagon-fill fs-3 flex-shrink-0"></i>
+            <div>
+                <strong class="d-block text-white">This order was Cancelled</strong>
+                <span class="text-muted small">Any associated reserved hardware items have been restocked to the live inventory.</span>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Left: Line Items List -->
+        <div class="col-lg-8">
+            <div class="nexus-card-static p-4 h-100">
+                <h5 class="text-white fw-bold mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+                    <i class="bi bi-cpu text-mint"></i> Purchased Hardware Items (@Model.Items.Count)
+                </h5>
+
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead class="text-muted small border-secondary">
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Price</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Subtotal</th>
+                                <th class="text-end">Review</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@item.ImageUrl" alt="@item.ProductName" class="rounded object-fit-contain bg-black border border-secondary border-opacity-25" style="width: 52px; height: 52px;" />
+                                            <div>
+                                                <a asp-controller="Catalog" asp-action="Details" asp-route-id="@item.ProductId" class="text-white text-decoration-none fw-medium d-block">
+                                                    @item.ProductName
+                                                </a>
+                                                <span class="text-muted very-small font-monospace">SKU-@item.ProductId</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center text-muted font-monospace">
+                                        @item.UnitPrice.ToString("N2") RON
+                                    </td>
+                                    <td class="text-center fw-bold text-white">
+                                        &times;@item.Quantity
+                                    </td>
+                                    <td class="text-end fw-bold text-mint font-monospace">
+                                        @item.LineTotal.ToString("N2") RON
+                                    </td>
+                                    <td class="text-end">
+                                        @if (item.CanReview)
+                                        {
+                                            <a asp-controller="Catalog" asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-outline-warning btn-sm py-1 px-2">
+                                                <i class="bi bi-star-fill me-1"></i> Review
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">&mdash;</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Destination & Financial Summary -->
+        <div class="col-lg-4">
+            <!-- Shipping Destination Card -->
+            <div class="nexus-card-static p-4 mb-4">
+                <h6 class="text-white fw-bold mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+                    <i class="bi bi-geo-alt-fill text-mint"></i> Shipping Destination
+                </h6>
+
+                <div class="small text-muted mb-2">Recipient:</div>
+                <div class="text-white fw-bold mb-2">@Model.CustomerName</div>
+
+                <div class="small text-muted mb-2">Address:</div>
+                <div class="text-white mb-2">
+                    @Model.ShippingStreet<br />
+                    @Model.ShippingCity, @Model.ShippingCounty, @Model.ShippingPostalCode
+                </div>
+
+                <div class="small text-muted mb-1">Contact Phone:</div>
+                <div class="text-white font-monospace mb-3">@Model.CustomerPhone</div>
+
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 small">
+                    <span class="text-muted d-block">Courier Service:</span>
+                    <strong class="text-mint">@Model.ShippingMethod</strong>
+                </div>
+            </div>
+
+            <!-- Financial Summary Card -->
+            <div class="nexus-card-static p-4">
+                <h6 class="text-white fw-bold mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt-cutoff text-mint"></i> Payment Summary
+                </h6>
+
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                    <span>Items Subtotal:</span>
+                    <span class="text-white font-monospace">@Model.Subtotal.ToString("N2") RON</span>
+                </div>
+
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                    <span>Delivery Fee:</span>
+                    @if (Model.ShippingCost == 0)
+                    {
+                        <span class="badge bg-success text-white">FREE</span>
+                    }
+                    else
+                    {
+                        <span class="text-white font-monospace">@Model.ShippingCost.ToString("N2") RON</span>
+                    }
+                </div>
+
+                @if (Model.DiscountAmount > 0)
+                {
+                    <div class="d-flex justify-content-between small text-mint mb-2">
+                        <span><i class="bi bi-tag-fill me-1"></i> Discount (@Model.DiscountCode):</span>
+                        <span class="font-monospace">-@Model.DiscountAmount.ToString("N2") RON</span>
+                    </div>
+                }
+
+                <div class="d-flex justify-content-between small text-muted mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                    <span>Includes 19% Romanian VAT:</span>
+                    <span class="font-monospace text-muted">@((Model.TotalAmount * 0.19m / 1.19m).ToString("N2")) RON</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-0">
+                    <span class="text-white fw-bold">Total Paid:</span>
+                    <span class="h4 fw-bold text-mint mb-0 font-monospace">@Model.TotalAmount.ToString("N2") <span class="fs-6 text-white">RON</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

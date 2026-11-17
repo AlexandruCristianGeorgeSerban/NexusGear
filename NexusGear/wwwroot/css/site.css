@@ -558,6 +558,14 @@ p.lead,
   color: #FFFFFF !important;
 }
 
+/* Bootstrap Input Group Dark Theme Overrides */
+.input-group-text {
+  background-color: #0f172a !important;
+  border-color: rgba(148, 163, 184, 0.25) !important;
+  color: #00E5A3 !important;
+  font-weight: 700 !important;
+}
+
 /* Toast container for AJAX notifications */
 #nexus-toast-container {
   position: fixed;

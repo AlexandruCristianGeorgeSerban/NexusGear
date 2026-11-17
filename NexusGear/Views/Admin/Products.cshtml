@@ -1,0 +1,163 @@
+@model NexusGear.ViewModels.AdminProductListViewModel
+@{
+    ViewData["Title"] = "Product Inventory & Catalog — NexusGear Admin";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none text-muted">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">Product Management</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="nexus-card-static p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h1 class="h3 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                    <i class="bi bi-cpu text-mint"></i> Product Catalog &amp; Inventory (A9)
+                </h1>
+                <p class="text-muted small mb-0">Create new items, upload high-resolution gear assets, and monitor stock levels in real time.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Dashboard
+                </a>
+                <a asp-action="CreateProduct" class="btn btn-tech btn-sm fw-bold">
+                    <i class="bi bi-plus-lg me-1"></i> Add New Product
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="row g-3 align-items-center mt-3 pt-3 border-top border-secondary border-opacity-25">
+            <div class="col-md-5">
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-action="Products" asp-route-search="@Model.SearchTerm"
+                       class="btn btn-sm @(!Model.CategoryId.HasValue ? "btn-tech" : "btn-outline-secondary text-muted") py-1 px-3 rounded-pill fw-medium">
+                        All Categories
+                    </a>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        bool isActive = Model.CategoryId.HasValue && Model.CategoryId.Value == cat.CategoryId;
+                        <a asp-action="Products" asp-route-categoryId="@cat.CategoryId" asp-route-search="@Model.SearchTerm"
+                           class="btn btn-sm @(isActive ? "btn-tech" : "btn-outline-secondary text-muted") py-1 px-3 rounded-pill fw-medium">
+                            @cat.Name
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <form method="get" asp-action="Products" class="d-flex gap-2 justify-content-md-end">
+                    @if (Model.CategoryId.HasValue)
+                    {
+                        <input type="hidden" name="categoryId" value="@Model.CategoryId.Value" />
+                    }
+                    <input type="text" name="search" value="@Model.SearchTerm" class="form-control form-control-nexus form-control-sm" style="max-width: 280px;" placeholder="Search product name..." />
+                    <button type="submit" class="btn btn-tech btn-sm px-3">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <a asp-action="Products" asp-route-categoryId="@Model.CategoryId" class="btn btn-outline-danger btn-sm" title="Clear Search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    @if (!Model.Products.Any())
+    {
+        <div class="nexus-card-static p-5 text-center">
+            <i class="bi bi-search text-muted display-4 d-block mb-3"></i>
+            <h5 class="text-white fw-bold mb-2">No products found</h5>
+            <p class="text-muted small mb-3">No products match your selected category or search filter.</p>
+            <a asp-action="CreateProduct" class="btn btn-tech btn-sm fw-bold">
+                <i class="bi bi-plus-lg me-1"></i> Create First Product
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="nexus-card-static p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted small">Showing <strong>@Model.Products.Count</strong> product(s)</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-0">
+                    <thead class="text-muted small border-secondary">
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th class="text-center">Price</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var prod in Model.Products)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="@prod.ImageUrl" alt="@prod.Name" class="rounded object-fit-contain bg-black border border-secondary border-opacity-25" style="width: 48px; height: 48px;" />
+                                        <div>
+                                            <a asp-action="EditProduct" asp-route-id="@prod.ProductId" class="text-white text-decoration-none fw-medium d-block">
+                                                @prod.Name
+                                            </a>
+                                            <span class="text-muted very-small font-monospace">SKU-@prod.ProductId</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-dark border border-secondary text-white">@prod.CategoryName</span>
+                                </td>
+                                <td class="text-center font-monospace fw-bold text-mint">
+                                    @prod.Price.ToString("N2") RON
+                                </td>
+                                <td class="text-center font-monospace fw-bold text-white">
+                                    @prod.StockQuantity
+                                </td>
+                                <td class="text-center">
+                                    @if (prod.StockStatus == "In Stock")
+                                    {
+                                        <span class="badge bg-success text-white">In Stock</span>
+                                    }
+                                    else if (prod.StockStatus == "Low Stock")
+                                    {
+                                        <span class="badge bg-warning text-dark fw-bold">Low Stock (&le; 5)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger text-white">Out of Stock</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a asp-action="EditProduct" asp-route-id="@prod.ProductId" class="btn btn-outline-light btn-sm py-1 px-2" title="Edit Product">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </a>
+                                        <form method="post" asp-action="DeleteProduct" asp-route-id="@prod.ProductId" class="d-inline" onsubmit="return confirm('Are you sure you want to delete/archive product \'@prod.Name\'?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-danger btn-sm py-1 px-2" title="Delete Product">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
