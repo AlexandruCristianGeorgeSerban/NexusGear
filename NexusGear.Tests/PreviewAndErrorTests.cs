@@ -36,7 +36,7 @@ public class PreviewAndErrorTests
         var controller = new OrdersController();
 
         // Act
-        var result = controller.Index();
+        var result = controller.Roadmap();
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
@@ -54,7 +54,7 @@ public class PreviewAndErrorTests
         var controller = new AdminController();
 
         // Act
-        var result = controller.Dashboard();
+        var result = controller.Roadmap();
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);

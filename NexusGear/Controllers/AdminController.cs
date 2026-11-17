@@ -1,18 +1,27 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using NexusGear.Services.Interfaces;
 using NexusGear.ViewModels;
 
 namespace NexusGear.Controllers;
 
+[Authorize(Roles = "Admin")]
+[Route("Admin/[action]")]
 public class AdminController : Controller
 {
-    [HttpGet]
-    public IActionResult Index()
+    private readonly IAdminService _adminService;
+    private readonly IWebHostEnvironment _environment;
+
+    public AdminController(IAdminService? adminService = null, IWebHostEnvironment? environment = null)
     {
-        return RedirectToAction(nameof(Dashboard));
+        _adminService = adminService!;
+        _environment = environment!;
     }
 
-    [HttpGet]
-    public IActionResult Dashboard()
+    [AllowAnonymous]
+    [HttpGet("/Admin/Roadmap")]
+    public IActionResult Roadmap()
     {
         var model = new RoadmapPreviewViewModel
         {
@@ -45,5 +54,165 @@ public class AdminController : Controller
 
         return View("~/Views/Shared/RoadmapPreview.cshtml", model);
     }
-}
 
+    [HttpGet]
+    [Route("/Admin")]
+    public IActionResult Index()
+    {
+        return RedirectToAction(nameof(Dashboard));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Dashboard()
+    {
+        var model = await _adminService.GetDashboardMetricsAsync();
+        return View(model);
+    }
+
+    // ==========================================
+    // Order Management (A9, A7 Restock)
+    // ==========================================
+
+    [HttpGet]
+    public async Task<IActionResult> Orders(string? status = "All", string? search = null)
+    {
+        var model = await _adminService.GetAdminOrdersAsync(status, search);
+        return View(model);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> OrderDetails(int id)
+    {
+        var model = await _adminService.GetAdminOrderDetailAsync(id);
+        if (model == null)
+        {
+            TempData["ErrorMessage"] = $"Order #{id} not found.";
+            return RedirectToAction(nameof(Orders));
+        }
+
+        return View(model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateOrderStatus(int orderId, string newStatus)
+    {
+        var result = await _adminService.UpdateOrderStatusAsync(orderId, newStatus);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+        }
+        else
+        {
+            TempData["ErrorMessage"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(OrderDetails), new { id = orderId });
+    }
+
+    // ==========================================
+    // Product Management (A9 CRUD & Image Upload)
+    // ==========================================
+
+    [HttpGet]
+    public async Task<IActionResult> Products(int? categoryId = null, string? search = null)
+    {
+        var model = await _adminService.GetAdminProductsAsync(categoryId, search);
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreateProduct()
+    {
+        var model = await _adminService.PrepareCreateProductFormAsync();
+        return View("ProductForm", model);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateProduct(AdminProductFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var freshForm = await _adminService.PrepareCreateProductFormAsync();
+            model.AvailableCategories = freshForm.AvailableCategories;
+            return View("ProductForm", model);
+        }
+
+        var result = await _adminService.CreateProductAsync(model, _environment.WebRootPath);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+            return RedirectToAction(nameof(Products));
+        }
+
+        TempData["ErrorMessage"] = result.Message;
+        var retryForm = await _adminService.PrepareCreateProductFormAsync();
+        model.AvailableCategories = retryForm.AvailableCategories;
+        return View("ProductForm", model);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> EditProduct(int id)
+    {
+        var model = await _adminService.PrepareEditProductFormAsync(id);
+        if (model == null)
+        {
+            TempData["ErrorMessage"] = $"Product #{id} not found.";
+            return RedirectToAction(nameof(Products));
+        }
+
+        return View("ProductForm", model);
+    }
+
+    [HttpPost]
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditProduct(AdminProductFormViewModel model, int? id = null)
+    {
+        if (!model.ProductId.HasValue && id.HasValue)
+        {
+            model.ProductId = id.Value;
+        }
+        if (!ModelState.IsValid)
+        {
+            if (model.ProductId.HasValue)
+            {
+                var freshForm = await _adminService.PrepareEditProductFormAsync(model.ProductId.Value);
+                if (freshForm != null)
+                {
+                    model.AvailableCategories = freshForm.AvailableCategories;
+                    model.ExistingImageUrl = freshForm.ExistingImageUrl;
+                }
+            }
+            return View("ProductForm", model);
+        }
+
+        var result = await _adminService.EditProductAsync(model, _environment.WebRootPath);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+            return RedirectToAction(nameof(Products));
+        }
+
+        TempData["ErrorMessage"] = result.Message;
+        return RedirectToAction(nameof(Products));
+    }
+
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteProduct(int id)
+    {
+        var result = await _adminService.DeleteProductAsync(id);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+        }
+        else
+        {
+            TempData["ErrorMessage"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Products));
+    }
+}

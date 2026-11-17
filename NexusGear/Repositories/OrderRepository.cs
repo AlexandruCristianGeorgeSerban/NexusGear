@@ -43,4 +43,29 @@ public class OrderRepository : RepositoryBase<Order>, IOrderRepository
             .OrderByDescending(o => o.OrderDate)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Order>> GetAllOrdersWithDetailsAsync(string? status = null, string? search = null)
+    {
+        var query = _context.Orders
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+            .Include(o => o.Address)
+            .Include(o => o.DiscountCode)
+            .Include(o => o.User)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(status) && status != "All")
+        {
+            query = query.Where(o => o.Status == status);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+            query = query.Where(o => o.OrderNumber.Contains(search) ||
+                                     (o.User != null && (o.User.Email.Contains(search) || o.User.FullName.Contains(search))));
+        }
+
+        return await query.OrderByDescending(o => o.OrderDate).ToListAsync();
+    }
 }

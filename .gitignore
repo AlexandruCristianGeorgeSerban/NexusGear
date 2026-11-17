@@ -19,8 +19,9 @@ secrets.json
 *.sqlite3
 
 # Upload-uri locale de imagini făcute de utilizatori/admin în runtime
-wwwroot/uploads/
-!wwwroot/uploads/.gitkeep
+**/wwwroot/uploads/**
+!**/wwwroot/uploads/.gitkeep
+!**/wwwroot/uploads/**/.gitkeep
 wwwroot/images/products/*
 !wwwroot/images/products/placeholder.*
 
