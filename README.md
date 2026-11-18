@@ -53,7 +53,7 @@ dotnet run --project NexusGear
 * **Database**: SQLite via Entity Framework Core with Fluent API, migrations, and deterministic seed scripts (30 original products across 4 categories: Mechanical Keyboards, Gaming Mice, Deskmats & Mousepads, and Ergonomic Gaming Chairs) with photorealistic AI product assets.
 * **Payment Gateway**: Stripe (Sandbox/Test Mode) utilizing verified asynchronous server-side webhooks (`checkout.session.completed`), automatic fallback to embedded Sandbox Simulator for offline grading, and atomic inventory reduction.
 * **Email Testing**: Transactional HTML order confirmations sent through Mailtrap SMTP with fallback simulator logging.
-* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, multi-user address sharing, roadmap module routing, custom error handling, promo code validation, multi-step checkout order placement, Stripe test session & simulator fallback, idempotent webhook processing, atomic inventory decrement, and concurrency token checks (74 automated unit tests).
+* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, multi-user address sharing, roadmap module routing, custom error handling, promo code validation, multi-step checkout order placement, Stripe test session & simulator fallback, idempotent webhook processing, atomic inventory decrement, concurrency token checks, customer order history isolation, admin order workflow state transitions, atomic cancellation restock, and product CRUD image management (84 automated unit tests).
 
 ---
 
@@ -68,8 +68,8 @@ dotnet run --project NexusGear
 | **A5** | **Checkout flow** (address, 2 shipping methods, summary, confirmation) | Popa-Ion Andrei | P3 (Week 8) | Complete |
 | **A6** | **Sandbox payment** (Stripe test session + verified webhook) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Complete |
 | **A7** | **Stock management** (concurrency-safe deduction & restock on cancel) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Complete |
-| **A8** | **Order history** (customer dashboard with past orders and statuses) | Popa-Ion Andrei | P3 (Week 10) | Planned |
-| **A9** | **Administration panel** (custom CRUD, image upload, order transitions) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Planned |
+| **A8** | **Order history** (customer dashboard with past orders and statuses) | Popa-Ion Andrei | P3 (Week 10) | Complete |
+| **A9** | **Administration panel** (custom CRUD, image upload, order transitions) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
 | **A10** | **Basic security** (server validation, CSRF, EF Core, admin guards) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Planned |
 | **A11** | **Responsive design** (usable down to a 360 px viewport) | Popa-Ion Andrei | P3 (Week 11) | Complete |
 | **A12** | **Automated tests** (≥ 10 xUnit tests run with a single command) | Both | P3 (Week 11) | Complete |

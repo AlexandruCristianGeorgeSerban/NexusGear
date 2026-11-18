@@ -7,4 +7,5 @@ public interface IOrderRepository : IRepositoryBase<Order>
     Task<Order?> GetOrderByIdAsync(int orderId);
     Task<Order?> GetOrderByNumberAsync(string orderNumber);
     Task<IEnumerable<Order>> GetOrdersByUserIdAsync(int userId);
+    Task<IEnumerable<Order>> GetAllOrdersWithDetailsAsync(string? status = null, string? search = null);
 }

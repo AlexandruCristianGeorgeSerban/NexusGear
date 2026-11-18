@@ -1,0 +1,238 @@
+@model NexusGear.ViewModels.AdminOrderDetailViewModel
+@{
+    ViewData["Title"] = $"Manage Order {Model.OrderNumber} — NexusGear Admin";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none text-muted">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-action="Orders" class="text-decoration-none text-muted">Orders</a></li>
+            <li class="breadcrumb-item active text-mint font-monospace" aria-current="page">@Model.OrderNumber</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card with State Machine Controls (A9, A7) -->
+    <div class="nexus-card-static p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-1">
+                    <h1 class="h3 fw-bold text-white mb-0 font-monospace">@Model.OrderNumber</h1>
+                    @if (Model.Status == "Paid")
+                    {
+                        <span class="badge bg-success text-white px-3 py-2 fs-6"><i class="bi bi-check-circle-fill me-1"></i> Paid</span>
+                    }
+                    else if (Model.Status == "Shipped")
+                    {
+                        <span class="badge bg-info text-dark px-3 py-2 fs-6"><i class="bi bi-truck me-1"></i> Shipped</span>
+                    }
+                    else if (Model.Status == "Delivered")
+                    {
+                        <span class="badge bg-primary text-white px-3 py-2 fs-6"><i class="bi bi-patch-check-fill me-1"></i> Delivered</span>
+                    }
+                    else if (Model.Status == "Cancelled")
+                    {
+                        <span class="badge bg-danger text-white px-3 py-2 fs-6"><i class="bi bi-x-circle-fill me-1"></i> Cancelled</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark px-3 py-2 fs-6"><i class="bi bi-clock-history me-1"></i> Unpaid</span>
+                    }
+                </div>
+                <p class="text-muted small mb-0">
+                    Placed on <span class="text-white">@Model.OrderDate.ToString("dd MMMM yyyy, HH:mm")</span> &bull; Internal ID: <span class="text-mint font-monospace">#@Model.OrderId</span>
+                </p>
+            </div>
+
+            <div>
+                <a asp-action="Orders" class="btn btn-outline-secondary btn-sm px-3">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Orders
+                </a>
+            </div>
+        </div>
+
+        <!-- Order Workflow State Transition Controls (A9, A7) -->
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+            <h6 class="text-white fw-bold mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left-right text-mint"></i> Status Progression Workflow Controls
+            </h6>
+
+            @if (Model.AllowedTransitions.Any())
+            {
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="text-muted small me-2">Transition order to:</span>
+
+                    @if (Model.AllowedTransitions.Contains("Paid"))
+                    {
+                        <form method="post" asp-action="UpdateOrderStatus" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@Model.OrderId" />
+                            <input type="hidden" name="newStatus" value="Paid" />
+                            <button type="submit" class="btn btn-sm btn-success fw-bold px-3">
+                                <i class="bi bi-check-circle me-1"></i> Mark as Paid
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.AllowedTransitions.Contains("Shipped"))
+                    {
+                        <form method="post" asp-action="UpdateOrderStatus" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@Model.OrderId" />
+                            <input type="hidden" name="newStatus" value="Shipped" />
+                            <button type="submit" class="btn btn-sm btn-info fw-bold px-3 text-dark">
+                                <i class="bi bi-truck me-1"></i> Mark as Shipped
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.AllowedTransitions.Contains("Delivered"))
+                    {
+                        <form method="post" asp-action="UpdateOrderStatus" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@Model.OrderId" />
+                            <input type="hidden" name="newStatus" value="Delivered" />
+                            <button type="submit" class="btn btn-sm btn-primary fw-bold px-3">
+                                <i class="bi bi-house-check-fill me-1"></i> Mark as Delivered
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.AllowedTransitions.Contains("Cancelled"))
+                    {
+                        <form method="post" asp-action="UpdateOrderStatus" class="m-0" onsubmit="return confirm('WARNING: Cancelling this order will atomically restock all items back into product inventory. Proceed?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@Model.OrderId" />
+                            <input type="hidden" name="newStatus" value="Cancelled" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger px-3">
+                                <i class="bi bi-x-circle me-1"></i> Cancel &amp; Restock Inventory (A7)
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
+            else
+            {
+                <span class="badge bg-dark border border-secondary text-muted p-2">
+                    Order is in terminal state (@Model.Status). No further status transitions allowed.
+                </span>
+            }
+        </div>
+    </div>
+
+    <!-- Items and Details Grid -->
+    <div class="row g-4">
+        <!-- Left: Line Items -->
+        <div class="col-lg-8">
+            <div class="nexus-card-static p-4 h-100">
+                <h5 class="text-white fw-bold mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+                    <i class="bi bi-cpu text-mint"></i> Order Items (@Model.Items.Count)
+                </h5>
+
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead class="text-muted small border-secondary">
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Price</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@item.ImageUrl" alt="@item.ProductName" class="rounded object-fit-contain bg-black border border-secondary border-opacity-25" style="width: 50px; height: 50px;" />
+                                            <div>
+                                                <div class="text-white fw-medium">@item.ProductName</div>
+                                                <span class="text-muted very-small font-monospace">Product ID: #@item.ProductId</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center text-muted font-monospace">
+                                        @item.UnitPrice.ToString("N2") RON
+                                    </td>
+                                    <td class="text-center fw-bold text-white">
+                                        &times;@item.Quantity
+                                    </td>
+                                    <td class="text-end fw-bold text-mint font-monospace">
+                                        @item.LineTotal.ToString("N2") RON
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Destination & Financial Breakdown -->
+        <div class="col-lg-4">
+            <!-- Customer Destination Card -->
+            <div class="nexus-card-static p-4 mb-4">
+                <h6 class="text-white fw-bold mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+                    <i class="bi bi-person-fill text-mint"></i> Customer &amp; Delivery
+                </h6>
+
+                <div class="small text-muted mb-1">Customer Name:</div>
+                <div class="text-white fw-bold mb-2">@Model.CustomerName</div>
+
+                <div class="small text-muted mb-1">Customer Email:</div>
+                <div class="text-white small font-monospace mb-2">@Model.CustomerEmail</div>
+
+                <div class="small text-muted mb-1">Contact Phone:</div>
+                <div class="text-white font-monospace mb-2">@Model.CustomerPhone</div>
+
+                <div class="small text-muted mb-1">Shipping Address:</div>
+                <div class="text-white small mb-3">
+                    @Model.ShippingStreet<br />
+                    @Model.ShippingCity, @Model.ShippingCounty, @Model.ShippingPostalCode
+                </div>
+
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 small">
+                    <span class="text-muted d-block">Courier Provider:</span>
+                    <strong class="text-mint">@Model.ShippingMethod</strong>
+                </div>
+            </div>
+
+            <!-- Financial Summary Card -->
+            <div class="nexus-card-static p-4">
+                <h6 class="text-white fw-bold mb-3 pb-2 border-bottom border-secondary border-opacity-25 d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt-cutoff text-mint"></i> Order Accounting
+                </h6>
+
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                    <span>Items Subtotal:</span>
+                    <span class="text-white font-monospace">@Model.Subtotal.ToString("N2") RON</span>
+                </div>
+
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                    <span>Delivery Fee:</span>
+                    <span class="text-white font-monospace">@Model.ShippingCost.ToString("N2") RON</span>
+                </div>
+
+                @if (Model.DiscountAmount > 0)
+                {
+                    <div class="d-flex justify-content-between small text-mint mb-2">
+                        <span><i class="bi bi-tag-fill me-1"></i> Discount (@Model.DiscountCode):</span>
+                        <span class="font-monospace">-@Model.DiscountAmount.ToString("N2") RON</span>
+                    </div>
+                }
+
+                <div class="d-flex justify-content-between small text-muted mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                    <span>VAT Included (19%):</span>
+                    <span class="font-monospace text-muted">@((Model.TotalAmount * 0.19m / 1.19m).ToString("N2")) RON</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-0">
+                    <span class="text-white fw-bold">Settled Total:</span>
+                    <span class="h4 fw-bold text-mint mb-0 font-monospace">@Model.TotalAmount.ToString("N2") <span class="fs-6 text-white">RON</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,126 @@
+@model NexusGear.ViewModels.AdminProductFormViewModel
+@{
+    bool isEdit = Model.ProductId.HasValue;
+    ViewData["Title"] = isEdit ? $"Edit {Model.Name} — NexusGear Admin" : "Create New Product — NexusGear Admin";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none text-muted">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-action="Products" class="text-decoration-none text-muted">Products</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">@(isEdit ? "Edit Product" : "New Product")</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="nexus-card-static p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div>
+                        <h1 class="h3 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                            <i class="bi @(isEdit ? "bi-pencil-square" : "bi-plus-circle-fill") text-mint"></i>
+                            @(isEdit ? "Edit Product Specifications" : "Create New Catalog Gear")
+                        </h1>
+                        <p class="text-muted small mb-0">Fill in technical specs, set stock inventory, and upload high-res imagery.</p>
+                    </div>
+                    <a asp-action="Products" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                </div>
+
+                <form method="post" asp-action="@(isEdit ? "EditProduct" : "CreateProduct")" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    @if (isEdit)
+                    {
+                        <input type="hidden" asp-for="ProductId" />
+                        <input type="hidden" asp-for="ExistingImageUrl" />
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+                    <!-- Product Name -->
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label-nexus">Product Name</label>
+                        <input asp-for="Name" class="form-control form-control-nexus" placeholder="e.g. NexusStrike Pro K-98 HotSwap" required />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Category & Price Row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label-nexus">Category Hierarchy</label>
+                            <select asp-for="CategoryId" class="form-select form-control-nexus" required>
+                                <option value="">Select Category...</option>
+                                @foreach (var cat in Model.AvailableCategories)
+                                {
+                                    <option value="@cat.CategoryId">@cat.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Price" class="form-label-nexus">Retail Price (RON)</label>
+                            <div class="input-group">
+                                <input asp-for="Price" type="number" step="0.01" min="0.01" class="form-control form-control-nexus" placeholder="399.99" required />
+                                <span class="input-group-text font-monospace fw-bold" style="background-color: #0f172a; border-color: rgba(148, 163, 184, 0.25); color: #00E5A3 !important;">RON</span>
+                            </div>
+                            <span asp-validation-for="Price" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Stock Quantity & Inventory Level -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="StockQuantity" class="form-label-nexus">Stock Quantity (A7)</label>
+                            <input asp-for="StockQuantity" type="number" min="0" class="form-control form-control-nexus" placeholder="25" required />
+                            <span asp-validation-for="StockQuantity" class="text-danger small"></span>
+                            <div class="form-text text-muted very-small" style="font-size: 0.75rem;">
+                                Note: Stock is decremented on webhook payment and restocked if cancelled.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-nexus">Hardware Image Upload (A9)</label>
+                            <input type="file" name="ImageFile" class="form-control form-control-nexus" accept=".png,.jpg,.jpeg,.webp" />
+                            <div class="form-text text-muted very-small" style="font-size: 0.75rem;">
+                                Supports PNG, JPG, WEBP. Max file size: 5 MB.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview if Editing -->
+                    @if (isEdit && !string.IsNullOrEmpty(Model.ExistingImageUrl))
+                    {
+                        <div class="p-3 rounded bg-dark border border-secondary border-opacity-50 mb-3 d-flex align-items-center gap-3">
+                            <img src="@Model.ExistingImageUrl" alt="Current Preview" class="rounded object-fit-contain bg-black border border-secondary" style="width: 64px; height: 64px;" />
+                            <div>
+                                <span class="text-muted small d-block">Current Asset Path:</span>
+                                <span class="text-white small font-monospace">@Model.ExistingImageUrl</span>
+                                <span class="text-muted very-small d-block mt-1">Leave file input empty to preserve current image.</span>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Technical Description -->
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label-nexus">Technical Specifications &amp; Overview</label>
+                        <textarea asp-for="Description" rows="5" class="form-control form-control-nexus" placeholder="Detailed product description, technical switch specs, materials, and features..." required></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top border-secondary border-opacity-25">
+                        <a asp-action="Products" class="btn btn-outline-secondary px-4">Cancel</a>
+                        <button type="submit" class="btn btn-tech px-4 fw-bold">
+                            <i class="bi @(isEdit ? "bi-check-lg" : "bi-plus-lg") me-1"></i>
+                            @(isEdit ? "Save Product Changes" : "Create Product")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

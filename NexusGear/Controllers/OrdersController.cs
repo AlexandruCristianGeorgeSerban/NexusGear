@@ -1,12 +1,24 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NexusGear.Services.Interfaces;
 using NexusGear.ViewModels;
 
 namespace NexusGear.Controllers;
 
+[Authorize]
 public class OrdersController : Controller
 {
-    [HttpGet]
-    public IActionResult Index()
+    private readonly IOrderService _orderService;
+
+    public OrdersController(IOrderService? orderService = null)
+    {
+        _orderService = orderService!;
+    }
+
+    [AllowAnonymous]
+    [HttpGet("Orders/Roadmap")]
+    public IActionResult Roadmap()
     {
         var model = new RoadmapPreviewViewModel
         {
@@ -36,10 +48,39 @@ public class OrdersController : Controller
         return View("~/Views/Shared/RoadmapPreview.cshtml", model);
     }
 
-    [HttpGet]
-    public IActionResult Details(int id)
+    private int? GetCurrentUserId()
     {
-        return RedirectToAction(nameof(Index));
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim != null && int.TryParse(claim.Value, out int id))
+        {
+            return id;
+        }
+        return null;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Index(string? status = "All")
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var model = await _orderService.GetUserOrderHistoryAsync(userId.Value, status);
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var model = await _orderService.GetUserOrderDetailsAsync(id, userId.Value);
+        if (model == null)
+        {
+            TempData["ErrorMessage"] = "Order not found or you do not have permission to view it.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View(model);
     }
 }
-
