@@ -5,14 +5,43 @@ namespace NexusGear.ViewModels;
 
 public class AdminDashboardViewModel
 {
+    // Lifetime / Global Platform Metrics
     public decimal TotalRevenue { get; set; }
     public int TotalOrdersCount { get; set; }
     public int TotalProductsCount { get; set; }
     public int LowStockProductsCount { get; set; }
     public int PendingOrdersCount { get; set; }
 
+    // B4: Time Interval Selection & Sales Analytics
+    public string SelectedInterval { get; set; } = "30days"; // "7days", "30days", "all"
+    public decimal IntervalRevenue { get; set; }
+    public int IntervalOrdersCount { get; set; }
+    public decimal AverageOrderValue { get; set; } // AOV (IntervalRevenue / IntervalOrdersCount)
+    public List<DailySalesPointViewModel> DailySalesChart { get; set; } = new();
+    public List<AdminTopProductViewModel> TopSellingProducts { get; set; } = new(); // Top 5 bestsellers
+
     public List<AdminOrderRowViewModel> RecentOrders { get; set; } = new();
     public List<AdminLowStockProductViewModel> LowStockProducts { get; set; } = new();
+}
+
+public class DailySalesPointViewModel
+{
+    public string DateLabel { get; set; } = string.Empty; // e.g. "14 Nov"
+    public string FullDate { get; set; } = string.Empty;  // e.g. "2026-11-14"
+    public decimal Revenue { get; set; }
+    public int OrderCount { get; set; }
+}
+
+public class AdminTopProductViewModel
+{
+    public int ProductId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string CategoryName { get; set; } = string.Empty;
+    public string ImageUrl { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public int UnitsSold { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public int StockQuantity { get; set; }
 }
 
 public class AdminLowStockProductViewModel
