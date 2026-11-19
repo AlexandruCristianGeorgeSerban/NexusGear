@@ -53,7 +53,7 @@ dotnet run --project NexusGear
 * **Database**: SQLite via Entity Framework Core with Fluent API, migrations, and deterministic seed scripts (30 original products across 4 categories: Mechanical Keyboards, Gaming Mice, Deskmats & Mousepads, and Ergonomic Gaming Chairs) with photorealistic AI product assets.
 * **Payment Gateway**: Stripe (Sandbox/Test Mode) utilizing verified asynchronous server-side webhooks (`checkout.session.completed`), automatic fallback to embedded Sandbox Simulator for offline grading, and atomic inventory reduction.
 * **Email Testing**: Transactional HTML order confirmations sent through Mailtrap SMTP with fallback simulator logging.
-* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, multi-user address sharing, roadmap module routing, custom error handling, promo code validation, multi-step checkout order placement, Stripe test session & simulator fallback, idempotent webhook processing, atomic inventory decrement, concurrency token checks, customer order history isolation, admin order workflow state transitions, atomic cancellation restock, and product CRUD image management (84 automated unit tests).
+* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, multi-user address sharing, roadmap module routing, custom error handling, promo code validation, multi-step checkout order placement, Stripe test session & simulator fallback, idempotent webhook processing, atomic inventory decrement, concurrency token checks, customer order history isolation, admin order workflow state transitions, atomic cancellation restock, product CRUD image management, sales analytics dashboard with Chart.js, and server-side security authorization/CSRF validation (101 automated unit tests).
 
 ---
 
@@ -70,7 +70,7 @@ dotnet run --project NexusGear
 | **A7** | **Stock management** (concurrency-safe deduction & restock on cancel) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Complete |
 | **A8** | **Order history** (customer dashboard with past orders and statuses) | Popa-Ion Andrei | P3 (Week 10) | Complete |
 | **A9** | **Administration panel** (custom CRUD, image upload, order transitions) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
-| **A10** | **Basic security** (server validation, CSRF, EF Core, admin guards) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Planned |
+| **A10** | **Basic security** (server validation, CSRF, EF Core, admin guards) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Complete |
 | **A11** | **Responsive design** (usable down to a 360 px viewport) | Popa-Ion Andrei | P3 (Week 11) | Complete |
 | **A12** | **Automated tests** (≥ 10 xUnit tests run with a single command) | Both | P3 (Week 11) | Complete |
 
@@ -83,7 +83,7 @@ dotnet run --project NexusGear
 | **B1** | **Filtered search** (category, price range, in-stock, sorting, URL preserved) | Popa-Ion Andrei | P3 (Week 11) | Complete |
 | **B2** | **Recommendations** (dynamic "Frequently bought together" and "Similar products") | Popa-Ion Andrei | P3 (Week 11) | Complete |
 | **B3** | **Reviews and ratings** (verified buyers only, avg rating, admin moderation) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
-| **B4** | **Sales dashboard** (daily sales chart, top 5 products, AOV, time filters) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Planned |
+| **B4** | **Sales dashboard** (daily sales chart, top 5 products, AOV, time filters) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Complete |
 | **B5** | **Discount codes** (% or fixed amount, expiry date, max uses, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
 | **B6** | **Transactional email** (order confirmation via Mailtrap SMTP) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Complete |
 | **B7** | **Wishlist** (favorites for authenticated users, move to cart) | Popa-Ion Andrei | P3 (Week 8) | Complete |
