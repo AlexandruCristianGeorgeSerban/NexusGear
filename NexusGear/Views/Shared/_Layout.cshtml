@@ -74,7 +74,7 @@
                     <!-- Right-side Action Icons (Wishlist, Cart, Account) -->
                     <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
                         <!-- Wishlist Button (B7) -->
-                        <a asp-controller="Wishlist" asp-action="Index" class="btn-icon-nexus position-relative me-2" title="Saved Favorites" style="z-index: 10;">
+                        <a asp-controller="Wishlist" asp-action="Index" class="btn-icon-nexus position-relative me-2" title="Wishlist" style="z-index: 10;">
                             <i class="bi @(navWishlistCount > 0 ? "bi-heart-fill" : "bi-heart") fs-6 text-danger"></i>
                             <span class="btn-label d-none d-xl-inline">Wishlist</span>
                             <span class="position-absolute top-0 start-100 translate-middle badge badge-blue wishlist-badge @(navWishlistCount > 0 ? "" : "d-none")">@navWishlistCount</span>

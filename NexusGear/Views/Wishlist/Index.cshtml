@@ -1,6 +1,6 @@
 @model NexusGear.ViewModels.WishlistViewModel
 @{
-    ViewData["Title"] = "Saved Favorites - NexusGear";
+    ViewData["Title"] = "Wishlist - NexusGear";
 }
 
 <div class="container py-4">
@@ -9,7 +9,7 @@
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Home</a></li>
             <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index" class="text-decoration-none text-muted">Catalog</a></li>
-            <li class="breadcrumb-item active text-white" aria-current="page">Saved Favorites</li>
+            <li class="breadcrumb-item active text-white" aria-current="page">Wishlist</li>
         </ol>
     </nav>
 
@@ -17,7 +17,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
         <div>
             <h1 class="h2 fw-bold text-white mb-1 d-flex align-items-center gap-2">
-                <i class="bi bi-heart-fill text-danger"></i> Saved Favorites
+                <i class="bi bi-heart-fill text-danger"></i> Wishlist
                 @if (!Model.IsEmpty)
                 {
                     <span id="wishlistHeaderCount" class="badge badge-blue fs-6 align-middle">@Model.TotalCount @(Model.TotalCount == 1 ? "item" : "items")</span>

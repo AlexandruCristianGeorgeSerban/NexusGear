@@ -4,7 +4,7 @@ namespace NexusGear.Services.Interfaces;
 
 public interface IAdminService
 {
-    Task<AdminDashboardViewModel> GetDashboardMetricsAsync();
+    Task<AdminDashboardViewModel> GetDashboardMetricsAsync(string interval = "30days");
     Task<AdminOrderListViewModel> GetAdminOrdersAsync(string? status = null, string? search = null);
     Task<AdminOrderDetailViewModel?> GetAdminOrderDetailAsync(int orderId);
     Task<(bool Success, string Message)> UpdateOrderStatusAsync(int orderId, string newStatus);

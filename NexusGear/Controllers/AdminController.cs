@@ -63,9 +63,9 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Dashboard()
+    public async Task<IActionResult> Dashboard(string interval = "30days")
     {
-        var model = await _adminService.GetDashboardMetricsAsync();
+        var model = await _adminService.GetDashboardMetricsAsync(interval);
         return View(model);
     }
 

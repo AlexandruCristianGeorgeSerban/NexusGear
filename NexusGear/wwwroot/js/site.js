@@ -66,7 +66,7 @@ function updateWishlistBadge(count) {
     });
 
     // Update navbar heart icon between outline and filled
-    const navHearts = document.querySelectorAll('a[title="Saved Favorites"] i');
+    const navHearts = document.querySelectorAll('a[title="Wishlist"] i, a[title="Saved Favorites"] i');
     navHearts.forEach(navHeart => {
         if (count > 0) {
             navHeart.classList.remove('bi-heart');

@@ -38,7 +38,7 @@
         @if (!Model.IsEmpty)
         {
             <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Wishlist" asp-action="Index" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center px-3 py-1" title="Saved Favorites">
+                <a asp-controller="Wishlist" asp-action="Index" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center justify-content-center px-3 py-1" title="Wishlist">
                     <i class="bi @(wishlistCount > 0 ? "bi-heart-fill" : "bi-heart") me-1 text-danger"></i> Wishlist
                     @if (wishlistCount > 0)
                     {

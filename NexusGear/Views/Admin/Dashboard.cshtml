@@ -1,59 +1,183 @@
 @model NexusGear.ViewModels.AdminDashboardViewModel
 @{
-    ViewData["Title"] = "Admin Dashboard & Operations — NexusGear";
+    ViewData["Title"] = "Admin Dashboard & Sales Analytics — NexusGear";
 }
 
 <div class="container py-4">
-    <!-- Header with Shortcuts -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <!-- Header with Shortcuts & Interval Filter -->
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center mb-4 gap-3">
         <div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="badge bg-warning text-dark fw-bold"><i class="bi bi-shield-lock-fill me-1"></i> Admin Portal</span>
-                <span class="text-muted small">NexusGear Back-Office</span>
+                <span class="text-muted small">NexusGear Operations</span>
             </div>
-            <h1 class="h3 fw-bold text-white mb-0">System Operations &amp; Inventory Dashboard</h1>
+            <h1 class="h3 fw-bold text-white mb-0">System Operations &amp; Sales Dashboard</h1>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-action="Orders" class="btn btn-outline-light btn-sm fw-bold">
-                <i class="bi bi-box-seam me-1"></i> Manage Orders
-            </a>
-            <a asp-action="Products" class="btn btn-outline-light btn-sm fw-bold">
-                <i class="bi bi-cpu me-1"></i> Manage Products
-            </a>
-            <a asp-action="CreateProduct" class="btn btn-tech btn-sm fw-bold">
-                <i class="bi bi-plus-lg me-1"></i> New Product
-            </a>
+
+        <!-- Controls: Time Interval Filter & Quick Actions -->
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <!-- Time Interval Selector -->
+            <div class="d-inline-flex align-items-center rounded-2 bg-dark border border-secondary border-opacity-50 overflow-hidden p-0" style="height: 31px;" role="group" aria-label="Sales Period Filter">
+                <a asp-action="Dashboard" asp-route-interval="7days"
+                   class="btn btn-sm h-100 d-inline-flex align-items-center justify-content-center border-0 rounded-0 @(Model.SelectedInterval == "7days" ? "btn-mint text-dark fw-bold" : "")"
+                   style="padding: 0 14px !important; line-height: 1; @(Model.SelectedInterval == "7days" ? "" : "color: #94A3B8 !important; background: transparent;")">
+                    7 Days
+                </a>
+                <a asp-action="Dashboard" asp-route-interval="30days"
+                   class="btn btn-sm h-100 d-inline-flex align-items-center justify-content-center border-0 rounded-0 @(Model.SelectedInterval == "30days" ? "btn-mint text-dark fw-bold" : "")"
+                   style="padding: 0 14px !important; line-height: 1; @(Model.SelectedInterval == "30days" ? "" : "color: #94A3B8 !important; background: transparent;")">
+                    30 Days
+                </a>
+                <a asp-action="Dashboard" asp-route-interval="all"
+                   class="btn btn-sm h-100 d-inline-flex align-items-center justify-content-center border-0 rounded-0 @(Model.SelectedInterval == "all" ? "btn-mint text-dark fw-bold" : "")"
+                   style="padding: 0 14px !important; line-height: 1; @(Model.SelectedInterval == "all" ? "" : "color: #94A3B8 !important; background: transparent;")">
+                    All Time
+                </a>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <a asp-action="Orders" class="btn btn-outline-light btn-sm fw-bold d-inline-flex align-items-center" style="height: 31px;">
+                    <i class="bi bi-box-seam me-1"></i> Orders
+                </a>
+                <a asp-action="Products" class="btn btn-outline-light btn-sm fw-bold d-inline-flex align-items-center" style="height: 31px;">
+                    <i class="bi bi-cpu me-1"></i> Products
+                </a>
+                <a asp-action="CreateProduct" class="btn btn-tech btn-sm fw-bold d-inline-flex align-items-center" style="height: 31px;">
+                    <i class="bi bi-plus-lg me-1"></i> New Product
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Metrics Cards (A9) -->
+    <!-- Metrics Cards -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="nexus-card-static p-3 text-center border-secondary border-opacity-50">
-                <span class="text-muted small d-block mb-1">Gross Revenue</span>
-                <div class="h3 fw-bold text-mint mb-0">@Model.TotalRevenue.ToString("N2") <span class="fs-6 text-muted">RON</span></div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="nexus-card-static p-3 text-center border-mint border-opacity-50 h-100">
+                <span class="text-muted small d-block mb-1">
+                    Period Revenue
+                    <span class="badge bg-dark border border-secondary text-mint ms-1">@(Model.SelectedInterval == "7days" ? "7d" : Model.SelectedInterval == "30days" ? "30d" : "All")</span>
+                </span>
+                <div class="h3 fw-bold text-mint mb-0">@Model.IntervalRevenue.ToString("N2") <span class="fs-6 text-muted">RON</span></div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="nexus-card-static p-3 text-center border-secondary border-opacity-50">
-                <span class="text-muted small d-block mb-1">Total Orders</span>
-                <div class="h3 fw-bold text-white mb-0">@Model.TotalOrdersCount</div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="nexus-card-static p-3 text-center border-info border-opacity-50 h-100">
+                <span class="text-muted small d-block mb-1">
+                    Average Order Value (AOV)
+                </span>
+                <div class="h3 fw-bold text-info mb-0">@Model.AverageOrderValue.ToString("N2") <span class="fs-6 text-muted">RON</span></div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="nexus-card-static p-3 text-center border-secondary border-opacity-50">
-                <span class="text-muted small d-block mb-1">Active Catalog</span>
-                <div class="h3 fw-bold text-info mb-0">@Model.TotalProductsCount <span class="fs-6 text-muted">SKUs</span></div>
+        <div class="col-6 col-md-4 col-xl">
+            <div class="nexus-card-static p-3 text-center border-secondary border-opacity-50 h-100">
+                <span class="text-muted small d-block mb-1">Period Orders</span>
+                <div class="h3 fw-bold text-white mb-0">@Model.IntervalOrdersCount <span class="fs-6 text-muted">orders</span></div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="nexus-card-static p-3 text-center border-warning border-opacity-50">
+        <div class="col-6 col-md-6 col-xl">
+            <div class="nexus-card-static p-3 text-center border-secondary border-opacity-50 h-100">
+                <span class="text-muted small d-block mb-1">Lifetime Gross</span>
+                <div class="h3 fw-bold text-light mb-0">@Model.TotalRevenue.ToString("N2") <span class="fs-6 text-muted">RON</span></div>
+            </div>
+        </div>
+        <div class="col-6 col-md-6 col-xl">
+            <div class="nexus-card-static p-3 text-center border-warning border-opacity-50 h-100">
                 <span class="text-muted small d-block mb-1">Low Stock Warning</span>
-                <div class="h3 fw-bold text-warning mb-0">@Model.LowStockProductsCount <span class="fs-6 text-muted">items</span></div>
+                <div class="h3 fw-bold text-warning mb-0">@Model.LowStockProductsCount <span class="fs-6 text-muted">SKUs</span></div>
             </div>
         </div>
     </div>
 
+    <!-- Analytics Row: Daily Sales Chart & Top 5 Best-Selling Products -->
+    <div class="row g-4 mb-4">
+        <!-- Daily Sales Revenue Chart -->
+        <div class="col-12 col-lg-7 col-xl-8">
+            <div class="nexus-card-static p-4 h-100">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-3 pb-2 border-bottom border-secondary border-opacity-25 gap-2">
+                    <div>
+                        <h5 class="text-white fw-bold mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-graph-up text-mint"></i> Daily Sales &amp; Revenue Trendline
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Daily sales curve for @(Model.SelectedInterval == "7days" ? "the last 7 days" : Model.SelectedInterval == "30days" ? "the last 30 days" : "all time")
+                        </p>
+                    </div>
+                    <div class="text-sm-end">
+                        <span class="badge bg-dark border border-mint text-mint font-monospace">
+                            @Model.DailySalesChart.Count data points
+                        </span>
+                    </div>
+                </div>
+
+                <div class="position-relative" style="min-height: 260px;">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top 5 Best-Selling Products -->
+        <div class="col-12 col-lg-5 col-xl-4">
+            <div class="nexus-card-static p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-25">
+                    <div>
+                        <h5 class="text-warning fw-bold mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-trophy-fill text-warning"></i> Top 5 Best Sellers
+                        </h5>
+                        <p class="text-muted small mb-0">Ranked by units sold &amp; revenue</p>
+                    </div>
+                    <span class="badge bg-warning text-dark fw-bold">Top 5</span>
+                </div>
+
+                @if (!Model.TopSellingProducts.Any())
+                {
+                    <div class="text-center py-4 text-muted small">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        No sales recorded in this interval yet.
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @for (int i = 0; i < Model.TopSellingProducts.Count; i++)
+                        {
+                            var prod = Model.TopSellingProducts[i];
+                            var rankColor = i switch
+                            {
+                                0 => "badge bg-warning text-dark",
+                                1 => "badge bg-light text-dark",
+                                2 => "badge bg-info text-dark",
+                                _ => "badge bg-dark border border-secondary text-muted"
+                            };
+
+                            <div class="p-2 rounded-2 bg-dark border border-secondary border-opacity-50 d-flex align-items-center gap-3">
+                                <span class="@rankColor fw-bold" style="min-width: 28px; text-align: center;">#@(i + 1)</span>
+                                
+                                <img src="@prod.ImageUrl" alt="@prod.Name" class="rounded object-fit-cover bg-black border border-secondary border-opacity-25" style="width: 44px; height: 44px;" onerror="this.src='/images/products/placeholder.png';" />
+                                
+                                <div class="flex-grow-1 text-truncate">
+                                    <div class="text-white small fw-bold text-truncate" title="@prod.Name">@prod.Name</div>
+                                    <div class="text-muted very-small d-flex align-items-center gap-2" style="font-size: 0.75rem;">
+                                        <span>@prod.CategoryName</span>
+                                        <span>&bull;</span>
+                                        <span class="text-mint fw-bold">@prod.UnitsSold @(prod.UnitsSold == 1 ? "unit" : "units")</span>
+                                    </div>
+                                </div>
+
+                                <div class="text-end ps-1">
+                                    <div class="font-monospace fw-bold text-mint small">@prod.TotalRevenue.ToString("N2") RON</div>
+                                    <span class="badge @(prod.StockQuantity == 0 ? "bg-danger" : prod.StockQuantity <= 5 ? "bg-warning text-dark" : "bg-dark border border-secondary text-muted") very-small" style="font-size: 0.7rem;">
+                                        @prod.StockQuantity in stock
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Operational Queues: Recent Orders & Low Stock Alerts -->
     <div class="row g-4">
         <!-- Recent Orders Queue -->
         <div class="col-lg-8">
@@ -180,3 +304,150 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <!-- Chart.js 4.4.1 for Daily Sales Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartCanvas = document.getElementById('salesChart');
+            if (!chartCanvas) return;
+
+            const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailySalesChart.Select(c => c.DateLabel)));
+            const revenueData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailySalesChart.Select(c => c.Revenue)));
+            const orderCountData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.DailySalesChart.Select(c => c.OrderCount)));
+
+            const ctx = chartCanvas.getContext('2d');
+            
+            // Create mint glow gradient fill
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(0, 229, 163, 0.45)');
+            gradient.addColorStop(0.7, 'rgba(0, 229, 163, 0.08)');
+            gradient.addColorStop(1, 'rgba(0, 229, 163, 0.00)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Daily Revenue (RON)',
+                            data: revenueData,
+                            borderColor: '#00E5A3',
+                            borderWidth: 2.5,
+                            backgroundColor: gradient,
+                            fill: true,
+                            tension: 0.35,
+                            pointBackgroundColor: '#00E5A3',
+                            pointBorderColor: '#0B1120',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: '#FFFFFF',
+                            pointHoverBorderColor: '#00E5A3',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Orders Count',
+                            data: orderCountData,
+                            type: 'bar',
+                            backgroundColor: 'rgba(56, 189, 248, 0.3)',
+                            borderColor: 'rgba(56, 189, 248, 0.8)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#94A3B8',
+                                boxWidth: 14,
+                                font: {
+                                    family: 'system-ui, sans-serif',
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#131D31',
+                            titleColor: '#FFFFFF',
+                            bodyColor: '#CBD5E1',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: true,
+                            callbacks: {
+                                label: function (context) {
+                                    if (context.dataset.yAxisID === 'y') {
+                                        return ` Revenue: ${context.parsed.y.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RON`;
+                                    } else {
+                                        return ` Orders: ${context.parsed.y} order(s)`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(51, 65, 85, 0.35)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#94A3B8',
+                                font: {
+                                    size: 11
+                                },
+                                maxRotation: 45
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(51, 65, 85, 0.35)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#00E5A3',
+                                font: {
+                                    size: 11
+                                },
+                                callback: function (value) {
+                                    return value + ' RON';
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                color: '#38BDF8',
+                                precision: 0,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}
