@@ -56,6 +56,52 @@ public class CartController : Controller
     }
 
     // =========================================================================
+    // POST: /Cart/AddBundle
+    // =========================================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddBundle([FromForm] List<int> productIds, string? returnUrl = null)
+    {
+        if (productIds == null || !productIds.Any())
+        {
+            TempData["ErrorMessage"] = "No products were specified for the bundle.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        int addedCount = 0;
+        var addedProductIds = new List<int>();
+        foreach (var pid in productIds.Distinct())
+        {
+            var result = await _cartService.AddToCartAsync(pid, 1);
+            if (result.Success)
+            {
+                addedCount++;
+                addedProductIds.Add(pid);
+            }
+        }
+
+        if (addedCount > 0)
+        {
+            if (addedProductIds.Count >= 2)
+            {
+                _cartService.RegisterBundle(addedProductIds);
+            }
+            TempData["SuccessMessage"] = $"Added {addedCount} bundle items to your shopping cart! 5% Hardware Bundle savings applied.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Could not add bundle items to your cart (items may be out of stock).";
+        }
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // =========================================================================
     // POST: /Cart/Update
     // =========================================================================
     [HttpPost]

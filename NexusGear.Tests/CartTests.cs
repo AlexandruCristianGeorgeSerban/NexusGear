@@ -78,9 +78,28 @@ public class CartTests
             ImageUrl = "/images/products/Product_3.png"
         };
 
+        var category2 = new Category
+        {
+            CategoryId = 2,
+            Name = "Gaming Mice",
+            Slug = "gaming-mice",
+            Description = "Precision gaming mice"
+        };
+
+        var product4 = new Product
+        {
+            ProductId = 4,
+            Name = "NexusGhost Ultra Mouse",
+            Description = "Ultralight wireless gaming mouse",
+            Price = 100.00m,
+            StockQuantity = 10,
+            CategoryId = 2,
+            ImageUrl = "/images/products/Product_4.png"
+        };
+
         context.Users.Add(user);
-        context.Categories.Add(category);
-        context.Products.AddRange(product1, product2, productOutOfStock);
+        context.Categories.AddRange(category, category2);
+        context.Products.AddRange(product1, product2, productOutOfStock, product4);
         context.SaveChanges();
     }
 
@@ -314,6 +333,161 @@ public class CartTests
         Assert.Equal(399.98m, cart.GrandTotal);
         Assert.Equal(0.00m, cart.AmountNeededForFreeShipping);
         Assert.Equal(100, cart.FreeShippingProgressPercentage);
+    }
+
+    [Fact]
+    public async Task CartTotals_ComplementaryCategories_AppliesFivePercentBundleDiscount()
+    {
+        // Arrange: User adds Product 1 (Keyboard, Cat 1: 199.99 RON) and Product 4 (Mouse, Cat 2: 100.00 RON)
+        var (service, _, _) = CreateTestSetup(nameof(CartTotals_ComplementaryCategories_AppliesFivePercentBundleDiscount));
+
+        await service.AddToCartAsync(productId: 1, quantity: 1);
+        await service.AddToCartAsync(productId: 4, quantity: 1);
+
+        // Act
+        var cart = await service.GetCartAsync();
+
+        // Assert (B2 Bundle Discount)
+        decimal expectedSubtotal = 199.99m + 100.00m; // 299.99 RON
+        decimal expectedBundleDiscount = Math.Round(expectedSubtotal * 0.05m, 2); // 15.00 RON
+        decimal expectedShipping = 15.00m; // Subtotal 299.99 < 300.00 free threshold
+        decimal expectedGrandTotal = expectedSubtotal - expectedBundleDiscount + expectedShipping; // 299.99 RON
+
+        Assert.Equal(expectedSubtotal, cart.Subtotal);
+        Assert.True(cart.HasBundleDiscount);
+        Assert.Equal(expectedBundleDiscount, cart.BundleDiscount);
+        Assert.Equal(expectedShipping, cart.ShippingFee);
+        Assert.Equal(expectedGrandTotal, cart.GrandTotal);
+    }
+
+    [Fact]
+    public async Task CartTotals_RegisteredBundleWithUnrelatedItem_AppliesDiscountOnlyToBundleItems()
+    {
+        // Arrange: User adds Product 1 (Keyboard: 199.99 RON) and Product 4 (Mouse: 100.00 RON) as a Bundle
+        // and also adds Product 2 (Deskmat: 49.99 RON) as an unrelated item
+        var (service, _, _) = CreateTestSetup(nameof(CartTotals_RegisteredBundleWithUnrelatedItem_AppliesDiscountOnlyToBundleItems));
+
+        service.RegisterBundle(new List<int> { 1, 4 });
+        await service.AddToCartAsync(productId: 1, quantity: 1);
+        await service.AddToCartAsync(productId: 4, quantity: 1);
+        await service.AddToCartAsync(productId: 2, quantity: 1);
+
+        // Act
+        var cart = await service.GetCartAsync();
+
+        // Assert:
+        // Total subtotal = 199.99 + 100.00 + 49.99 = 349.98 RON
+        // Bundle discount ONLY on Product 1 and Product 4: (199.99 * 0.05 = 10.00) + (100.00 * 0.05 = 5.00) = 15.00 RON
+        // Deskmat (Product 2) MUST NOT receive bundle discount!
+        decimal expectedBundleDiscount = 15.00m;
+        decimal expectedSubtotal = 349.98m;
+
+        Assert.Equal(expectedSubtotal, cart.Subtotal);
+        Assert.Equal(expectedBundleDiscount, cart.BundleDiscount);
+
+        var item1 = cart.Items.First(i => i.ProductId == 1);
+        var item4 = cart.Items.First(i => i.ProductId == 4);
+        var item2 = cart.Items.First(i => i.ProductId == 2);
+
+        Assert.True(item1.IsBundleItem);
+        Assert.Equal(10.00m, item1.BundleDiscountAmount);
+        Assert.Equal(189.99m, item1.DiscountedLineTotal);
+
+        Assert.True(item4.IsBundleItem);
+        Assert.Equal(5.00m, item4.BundleDiscountAmount);
+        Assert.Equal(95.00m, item4.DiscountedLineTotal);
+
+        Assert.False(item2.IsBundleItem);
+        Assert.Equal(0.00m, item2.BundleDiscountAmount);
+        Assert.Equal(49.99m, item2.DiscountedLineTotal);
+    }
+
+    [Fact]
+    public async Task Cart_RemoveItemFromBundle_ClearsDiscountAndBundleBadgeFromRemainingItem()
+    {
+        // Arrange: User adds Bundle [1, 4] (Keyboard + Mouse)
+        var (service, _, _) = CreateTestSetup(nameof(Cart_RemoveItemFromBundle_ClearsDiscountAndBundleBadgeFromRemainingItem));
+
+        service.RegisterBundle(new List<int> { 1, 4 });
+        await service.AddToCartAsync(productId: 1, quantity: 1);
+        await service.AddToCartAsync(productId: 4, quantity: 1);
+
+        // Before removal: bundle is active
+        var cartBefore = await service.GetCartAsync();
+        Assert.Equal(15.00m, cartBefore.BundleDiscount);
+        Assert.True(cartBefore.Items.First(i => i.ProductId == 1).IsBundleItem);
+
+        // Act: Remove Product 4
+        var removeResult = await service.RemoveFromCartAsync(productId: 4);
+
+        // Assert:
+        // Remaining cart should have 0 bundle discount
+        var cartAfter = await service.GetCartAsync();
+        Assert.Equal(0.00m, cartAfter.BundleDiscount);
+        Assert.False(cartAfter.HasBundleDiscount);
+
+        var remainingItem = cartAfter.Items.First(i => i.ProductId == 1);
+        Assert.False(remainingItem.IsBundleItem);
+        Assert.Equal(0.00m, remainingItem.BundleDiscountAmount);
+        Assert.Equal(remainingItem.LineTotal, remainingItem.DiscountedLineTotal);
+
+        // removeResult.Items DTO must inform frontend that item 1 is NO LONGER a bundle item
+        var itemDto = removeResult.Items.FirstOrDefault(i => i.ProductId == 1);
+        Assert.NotNull(itemDto);
+        Assert.False(itemDto.IsBundleItem);
+        Assert.Equal(0.00m, itemDto.BundleDiscountAmount);
+    }
+
+    [Fact]
+    public async Task Cart_TwoBundlesWithSharedItem_DecreasingSharedItemQuantity_DiscountsOnlyOneBundle()
+    {
+        // Arrange:
+        // Bundle 1: Product 1 (Keyboard: 199.99) + Product 2 (Deskmat: 49.99) -> 5% = 12.50 RON
+        // Bundle 2: Product 4 (Mouse: 100.00) + Product 2 (Deskmat: 49.99) -> 5% = 7.50 RON
+        // Shared item: Product 2 (Deskmat)
+        var (service, _, _) = CreateTestSetup(nameof(Cart_TwoBundlesWithSharedItem_DecreasingSharedItemQuantity_DiscountsOnlyOneBundle));
+
+        service.RegisterBundle(new List<int> { 1, 2 });
+        service.RegisterBundle(new List<int> { 4, 2 });
+
+        await service.AddToCartAsync(productId: 1, quantity: 1);
+        await service.AddToCartAsync(productId: 2, quantity: 2); // Qty = 2 allows BOTH bundles to be formed
+        await service.AddToCartAsync(productId: 4, quantity: 1);
+
+        // Step 1: When shared item quantity = 2, BOTH bundles are active
+        var cartWithTwoShared = await service.GetCartAsync();
+        Assert.Equal(20.00m, cartWithTwoShared.BundleDiscount); // 12.50 + 7.50
+        Assert.True(cartWithTwoShared.Items.First(i => i.ProductId == 1).IsBundleItem);
+        Assert.True(cartWithTwoShared.Items.First(i => i.ProductId == 4).IsBundleItem);
+        Assert.True(cartWithTwoShared.Items.First(i => i.ProductId == 2).IsBundleItem);
+        Assert.Equal(5.00m, cartWithTwoShared.Items.First(i => i.ProductId == 2).BundleDiscountAmount); // 2.50 * 2 units
+
+        // Step 2: Reduce shared item (Product 2) quantity to 1
+        var updateResult = await service.UpdateQuantityAsync(productId: 2, quantity: 1);
+
+        // Step 3: Now only ONE bundle can be formed! The second bundle MUST NOT receive discount!
+        var cartWithOneShared = await service.GetCartAsync();
+        Assert.Equal(12.50m, cartWithOneShared.BundleDiscount); // Only Bundle 1 is formed!
+
+        var item1 = cartWithOneShared.Items.First(i => i.ProductId == 1);
+        var item2 = cartWithOneShared.Items.First(i => i.ProductId == 2);
+        var item4 = cartWithOneShared.Items.First(i => i.ProductId == 4);
+
+        // Bundle 1 items get discount
+        Assert.True(item1.IsBundleItem);
+        Assert.Equal(10.00m, item1.BundleDiscountAmount);
+        Assert.True(item2.IsBundleItem);
+        Assert.Equal(2.50m, item2.BundleDiscountAmount);
+
+        // Product 4 (unfulfilled bundle item) MUST NOT receive discount
+        Assert.False(item4.IsBundleItem);
+        Assert.Equal(0.00m, item4.BundleDiscountAmount);
+        Assert.Equal(100.00m, item4.DiscountedLineTotal);
+
+        // AJAX DTO list must mirror this exact state for client-side DOM sync
+        var item4Dto = updateResult.Items.First(i => i.ProductId == 4);
+        Assert.False(item4Dto.IsBundleItem);
+        Assert.Equal(0.00m, item4Dto.BundleDiscountAmount);
     }
 
     // =========================================================================

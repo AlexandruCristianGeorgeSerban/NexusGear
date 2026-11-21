@@ -11,4 +11,5 @@ public interface ICartService
     Task ClearCartAsync();
     Task<int> GetCartItemCountAsync();
     Task MergeGuestCartIntoUserCartAsync(int userId);
+    void RegisterBundle(List<int> productIds);
 }

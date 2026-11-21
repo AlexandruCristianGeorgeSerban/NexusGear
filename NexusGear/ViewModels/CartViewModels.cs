@@ -10,7 +10,11 @@ public class CartItemViewModel
     public int Quantity { get; set; }
     public int MaxAvailableStock { get; set; }
 
+    public bool IsBundleItem { get; set; }
+    public decimal BundleDiscountAmount { get; set; }
+
     public decimal LineTotal => UnitPrice * Quantity;
+    public decimal DiscountedLineTotal => Math.Max(0m, LineTotal - BundleDiscountAmount);
     public bool IsInStock => MaxAvailableStock > 0;
     public bool IsQuantityAvailable => Quantity <= MaxAvailableStock;
 }
@@ -20,6 +24,11 @@ public class CartSummaryViewModel
     public List<CartItemViewModel> Items { get; set; } = new();
 
     public decimal Subtotal => Items.Sum(i => i.LineTotal);
+
+    // Hardware Bundle Discount (B2): 5% automatic discount on complementary gear
+    public decimal BundleDiscount { get; set; }
+    public bool HasBundleDiscount => BundleDiscount > 0;
+    public string BundleDiscountLabel => "Hardware Bundle Savings (5%)";
 
     public const decimal FreeShippingThreshold = 300.00m;
     public const decimal StandardShippingFee = 15.00m;
@@ -40,17 +49,28 @@ public class CartSummaryViewModel
 
     /// <summary>
     /// Estimated VAT breakdown (19% Romanian standard included in retail price).
-    /// Formula: Subtotal - (Subtotal / 1.19)
+    /// Formula: Net Subtotal - (Net Subtotal / 1.19)
     /// </summary>
-    public decimal EstimatedVat => Math.Round(Subtotal - (Subtotal / 1.19m), 2);
+    public decimal EstimatedVat => Math.Round(Math.Max(0m, Subtotal - BundleDiscount) - (Math.Max(0m, Subtotal - BundleDiscount) / 1.19m), 2);
 
-    public decimal GrandTotal => Subtotal + ShippingFee;
+    public decimal GrandTotal => Math.Max(0.00m, Subtotal - BundleDiscount + ShippingFee);
 
     public int TotalItemsCount => Items.Sum(i => i.Quantity);
 
     public bool IsEmpty => Items.Count == 0;
 
     public bool HasStockIssues => Items.Any(i => !i.IsQuantityAvailable || !i.IsInStock);
+}
+
+public class CartItemSummaryDto
+{
+    public int ProductId { get; set; }
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal LineTotal { get; set; }
+    public decimal DiscountedLineTotal { get; set; }
+    public decimal BundleDiscountAmount { get; set; }
+    public bool IsBundleItem { get; set; }
 }
 
 public class CartActionResult
@@ -60,9 +80,15 @@ public class CartActionResult
     public int TotalCartCount { get; set; }
     public int CartCount => TotalCartCount;
     public decimal Subtotal { get; set; }
+    public decimal BundleDiscount { get; set; }
+    public bool HasBundleDiscount => BundleDiscount > 0;
     public decimal ShippingFee { get; set; }
     public decimal GrandTotal { get; set; }
     public decimal LineTotal { get; set; }
+    public decimal DiscountedLineTotal { get; set; }
+    public decimal BundleDiscountAmount { get; set; }
+    public bool IsBundleItem { get; set; }
     public int UpdatedQuantity { get; set; }
     public bool IsEmpty { get; set; }
+    public List<CartItemSummaryDto> Items { get; set; } = new();
 }

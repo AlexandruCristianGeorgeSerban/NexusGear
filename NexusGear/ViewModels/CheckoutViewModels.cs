@@ -12,6 +12,7 @@ public class CheckoutItemViewModel
     public decimal UnitPrice { get; set; }
     public decimal LineTotal => Quantity * UnitPrice;
     public int AvailableStock { get; set; }
+    public bool IsBundleItem { get; set; }
 }
 
 public class CheckoutAddressViewModel
@@ -66,6 +67,8 @@ public class CheckoutIndexViewModel
 
     public string? AppliedDiscountCode { get; set; }
     public decimal Subtotal { get; set; }
+    public decimal BundleDiscount { get; set; }
+    public bool HasBundleDiscount => BundleDiscount > 0;
     public decimal ShippingCost { get; set; }
     public decimal DiscountAmount { get; set; }
     public decimal GrandTotal { get; set; }

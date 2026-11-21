@@ -1,6 +1,10 @@
 @model NexusGear.ViewModels.CartItemViewModel
 
-<tr class="border-bottom border-secondary border-opacity-25 cart-item-row" data-product-id="@Model.ProductId" data-max-stock="@Model.MaxAvailableStock">
+<tr class="border-bottom border-secondary border-opacity-25 cart-item-row @(Model.IsBundleItem && Model.BundleDiscountAmount > 0 ? "cart-bundle-row" : "")" 
+    data-product-id="@Model.ProductId" 
+    data-max-stock="@Model.MaxAvailableStock"
+    data-is-bundle="@((Model.IsBundleItem && Model.BundleDiscountAmount > 0).ToString().ToLowerInvariant())"
+    style="@(Model.IsBundleItem && Model.BundleDiscountAmount > 0 ? "background-color: rgba(0, 229, 163, 0.04); border-left: 3px solid #00E5A3 !important;" : "")">
     <!-- Product Info -->
     <td class="ps-4 py-3">
         <div class="d-flex align-items-center gap-3">
@@ -11,7 +15,15 @@
                 <a asp-controller="Catalog" asp-action="Details" asp-route-id="@Model.ProductId" class="text-white text-decoration-none fw-bold d-block line-clamp-1 hover-mint">
                     @Model.ProductName
                 </a>
-                <span class="badge bg-dark border border-secondary border-opacity-50 text-info small mt-1">@Model.CategoryName</span>
+                <div class="d-flex align-items-center gap-1 mt-1 flex-wrap">
+                    <span class="badge bg-dark border border-secondary border-opacity-50 text-info small">@Model.CategoryName</span>
+                    @if (Model.IsBundleItem && Model.BundleDiscountAmount > 0)
+                    {
+                        <span class="badge bg-dark border border-mint text-mint small fw-bold bundle-badge">
+                            <i class="bi bi-box-seam-fill me-1"></i>Bundle Item (-5%)
+                        </span>
+                    }
+                </div>
                 @if (!Model.IsQuantityAvailable)
                 {
                     <div class="text-danger small mt-1">
@@ -49,8 +61,17 @@
     </td>
 
     <!-- Line Total -->
-    <td class="py-3 text-end pe-4 text-mint fw-bold cart-line-total">
-        @Model.LineTotal.ToString("N2") <span class="small">RON</span>
+    <td class="py-3 text-end pe-4 cart-line-total">
+        @if (Model.IsBundleItem && Model.BundleDiscountAmount > 0)
+        {
+            <div class="text-decoration-line-through text-muted small">@Model.LineTotal.ToString("N2") RON</div>
+            <div class="text-mint fw-bold fs-6">@Model.DiscountedLineTotal.ToString("N2") <span class="small">RON</span></div>
+            <span class="badge bg-dark border border-mint text-mint very-small" style="font-size: 0.7rem;">-@Model.BundleDiscountAmount.ToString("N2") RON</span>
+        }
+        else
+        {
+            <span class="text-mint fw-bold">@Model.LineTotal.ToString("N2") <span class="small">RON</span></span>
+        }
     </td>
 
     <!-- Remove Action -->

@@ -1,5 +1,80 @@
 // NexusGear Dedicated Shopping Cart Module (A3, A11)
 
+function syncCartItemsDom(items) {
+    if (!items || !Array.isArray(items)) return;
+
+    const itemsMap = new Map();
+    items.forEach(it => itemsMap.set(it.productId, it));
+
+    const allRows = document.querySelectorAll('.cart-item-row');
+    allRows.forEach(row => {
+        const pid = parseInt(row.dataset.productId);
+        const itemData = itemsMap.get(pid);
+
+        if (!itemData || itemData.quantity <= 0) {
+            row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            setTimeout(() => row.remove(), 300);
+            return;
+        }
+
+        const qtyDisplay = row.querySelector('.cart-qty-value');
+        if (qtyDisplay) qtyDisplay.textContent = itemData.quantity;
+
+        const incBtn = row.querySelector('.btn-qty-inc');
+        const decBtn = row.querySelector('.btn-qty-dec');
+        const maxStock = parseInt(row.dataset.maxStock) || 999999;
+        if (incBtn) {
+            incBtn.value = itemData.quantity + 1;
+            incBtn.disabled = itemData.quantity >= maxStock;
+        }
+        if (decBtn) {
+            decBtn.value = itemData.quantity - 1;
+            decBtn.disabled = false;
+        }
+
+        const lineTotalElem = row.querySelector('.cart-line-total');
+        const hasDiscount = itemData.isBundleItem && itemData.bundleDiscountAmount > 0;
+
+        if (hasDiscount) {
+            row.classList.add('cart-bundle-row');
+            row.style.setProperty('border-left', '3px solid #00E5A3', 'important');
+            row.style.setProperty('background-color', 'rgba(0, 229, 163, 0.04)', 'important');
+
+            if (lineTotalElem) {
+                lineTotalElem.innerHTML = `
+                    <div class="text-decoration-line-through text-muted small">${itemData.lineTotal.toFixed(2)} RON</div>
+                    <div class="text-mint fw-bold fs-6">${itemData.discountedLineTotal.toFixed(2)} <span class="small">RON</span></div>
+                    <span class="badge bg-dark border border-mint text-mint very-small" style="font-size: 0.7rem;">-${itemData.bundleDiscountAmount.toFixed(2)} RON</span>
+                `;
+            }
+
+            let badge = row.querySelector('.bundle-badge');
+            if (!badge) {
+                const badgeContainer = row.querySelector('.d-flex.align-items-center.gap-1.mt-1');
+                if (badgeContainer) {
+                    badge = document.createElement('span');
+                    badge.className = 'badge bg-dark border border-mint text-mint small fw-bold bundle-badge';
+                    badge.innerHTML = '<i class="bi bi-box-seam-fill me-1"></i>Bundle Item (-5%)';
+                    badgeContainer.appendChild(badge);
+                }
+            }
+        } else {
+            row.classList.remove('cart-bundle-row');
+            row.style.borderLeft = '';
+            row.style.backgroundColor = '';
+
+            if (lineTotalElem) {
+                lineTotalElem.innerHTML = `<span class="text-mint fw-bold">${itemData.lineTotal.toFixed(2)} <span class="small">RON</span></span>`;
+            }
+
+            const badge = row.querySelector('.bundle-badge');
+            if (badge) badge.remove();
+        }
+    });
+}
+
 function updateCartSummaryDom(data) {
     if (!data) return;
 
@@ -18,8 +93,38 @@ function updateCartSummaryDom(data) {
 
     const summaryVat = document.getElementById('summaryVat');
     if (summaryVat) {
-        const vat = (data.subtotal - (data.subtotal / 1.19)).toFixed(2);
+        const netSubtotal = Math.max(0, data.subtotal - (data.bundleDiscount || 0));
+        const vat = (netSubtotal - (netSubtotal / 1.19)).toFixed(2);
         summaryVat.textContent = `${vat} RON`;
+    }
+
+    const summaryBundleDiscountRow = document.getElementById('summaryBundleDiscountRow');
+    const summaryBundleDiscount = document.getElementById('summaryBundleDiscount');
+    const summaryBundleBadge = document.getElementById('summaryBundleBadge');
+    const cartBundleAlertBanner = document.getElementById('cartBundleAlertBanner');
+    if (data.bundleDiscount && data.bundleDiscount > 0) {
+        if (summaryBundleDiscountRow) {
+            summaryBundleDiscountRow.style.setProperty('display', 'flex', 'important');
+        }
+        if (summaryBundleDiscount) {
+            summaryBundleDiscount.textContent = `-${data.bundleDiscount.toFixed(2)} RON`;
+        }
+        if (summaryBundleBadge) {
+            summaryBundleBadge.style.setProperty('display', 'flex', 'important');
+        }
+        if (cartBundleAlertBanner) {
+            cartBundleAlertBanner.style.setProperty('display', 'flex', 'important');
+        }
+    } else {
+        if (summaryBundleDiscountRow) {
+            summaryBundleDiscountRow.style.setProperty('display', 'none', 'important');
+        }
+        if (summaryBundleBadge) {
+            summaryBundleBadge.style.setProperty('display', 'none', 'important');
+        }
+        if (cartBundleAlertBanner) {
+            cartBundleAlertBanner.style.setProperty('display', 'none', 'important');
+        }
     }
 
     const summaryGrandTotal = document.getElementById('summaryGrandTotal');
@@ -106,7 +211,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
 
-                    if (data.updatedQuantity <= 0) {
+                    if (data.items && Array.isArray(data.items)) {
+                        syncCartItemsDom(data.items);
+                    } else if (data.updatedQuantity <= 0) {
                         row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                         row.style.opacity = '0';
                         row.style.transform = 'translateX(20px)';
@@ -129,7 +236,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         const lineTotalElem = row.querySelector('.cart-line-total');
                         if (lineTotalElem) {
-                            lineTotalElem.innerHTML = `${data.lineTotal.toFixed(2)} <span class="small">RON</span>`;
+                            if (data.isBundleItem && data.bundleDiscountAmount > 0) {
+                                lineTotalElem.innerHTML = `
+                                    <div class="text-decoration-line-through text-muted small">${data.lineTotal.toFixed(2)} RON</div>
+                                    <div class="text-mint fw-bold fs-6">${data.discountedLineTotal.toFixed(2)} <span class="small">RON</span></div>
+                                    <span class="badge bg-dark border border-mint text-mint very-small" style="font-size: 0.7rem;">-${data.bundleDiscountAmount.toFixed(2)} RON</span>
+                                `;
+                            } else {
+                                lineTotalElem.innerHTML = `<span class="text-mint fw-bold">${data.lineTotal.toFixed(2)} <span class="small">RON</span></span>`;
+                            }
+                        }
+
+                        if (data.isBundleItem && data.bundleDiscountAmount > 0) {
+                            row.classList.add('cart-bundle-row');
+                            row.style.borderLeft = '3px solid #00E5A3';
+                            row.style.backgroundColor = 'rgba(0, 229, 163, 0.04)';
+                        } else {
+                            row.classList.remove('cart-bundle-row');
+                            row.style.borderLeft = '';
+                            row.style.backgroundColor = '';
+                            const badge = row.querySelector('.bundle-badge');
+                            if (badge) badge.remove();
                         }
                     }
 
@@ -145,6 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch {
             form.submit();
+        } finally {
+            formButtons.forEach(b => b.disabled = false);
         }
     });
 
@@ -172,7 +301,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
 
-                    if (row) {
+                    if (data.items && Array.isArray(data.items)) {
+                        syncCartItemsDom(data.items);
+                    } else if (row) {
                         row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                         row.style.opacity = '0';
                         row.style.transform = 'translateX(20px)';

@@ -127,11 +127,30 @@ public class CheckoutTests
             UsedCount = 5
         };
 
+        var category2 = new Category
+        {
+            CategoryId = 2,
+            Name = "Gaming Mice",
+            Slug = "gaming-mice",
+            Description = "Precision gaming mice"
+        };
+
+        var product3 = new Product
+        {
+            ProductId = 3,
+            Name = "NexusGlide Pro Mouse",
+            Description = "Ultralight gaming mouse",
+            Price = 100.00m,
+            StockQuantity = 10,
+            CategoryId = 2,
+            ImageUrl = "/images/products/Product_3.png"
+        };
+
         context.Users.Add(user);
         context.Addresses.Add(address);
         context.UserAddresses.Add(userAddress);
-        context.Categories.Add(category);
-        context.Products.AddRange(product1, product2);
+        context.Categories.AddRange(category, category2);
+        context.Products.AddRange(product1, product2, product3);
         context.DiscountCodes.AddRange(discountPercentage, discountFixed, discountExpired, discountExhausted);
         context.SaveChanges();
     }
@@ -158,6 +177,31 @@ public class CheckoutTests
         var checkoutService = new CheckoutService(context, repoWrapper, cartService, discountService);
 
         return (checkoutService, discountService, context);
+    }
+
+    private static (CheckoutService checkoutService, CartService cartService, DiscountService discountService, AppDbContext context)
+        CreateTestEnvironmentWithCart(string dbName, int userId = 1)
+    {
+        var context = CreateInMemoryDbContext(dbName);
+        var repoWrapper = new RepositoryWrapper(context);
+
+        var httpContext = new DefaultHttpContext();
+        httpContext.Session = new TestSession();
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Name, "customer@nexusgear.ro"),
+            new Claim(ClaimTypes.Role, "Customer")
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        httpContext.User = new ClaimsPrincipal(identity);
+
+        var accessor = new HttpContextAccessor { HttpContext = httpContext };
+        var cartService = new CartService(repoWrapper, accessor);
+        var discountService = new DiscountService(repoWrapper);
+        var checkoutService = new CheckoutService(context, repoWrapper, cartService, discountService);
+
+        return (checkoutService, cartService, discountService, context);
     }
 
     // =========================================================================
@@ -415,5 +459,66 @@ public class CheckoutTests
         Assert.Single(confirmation.Items);
         Assert.Equal(200.00m, confirmation.Subtotal);
         Assert.Equal(215.00m, confirmation.TotalAmount);
+    }
+
+    [Fact]
+    public async Task PlaceOrder_WithBundleItemsFromDistinctCategories_AppliesBundleDiscount()
+    {
+        var (checkoutService, _, context) = CreateTestEnvironment(nameof(PlaceOrder_WithBundleItemsFromDistinctCategories_AppliesBundleDiscount));
+
+        // Add Product 1 (Cat 1: 200 RON) and Product 3 (Cat 2: 100 RON) -> Subtotal = 300 RON
+        context.CartItems.Add(new CartItem { UserId = 1, ProductId = 1, Quantity = 1 });
+        context.CartItems.Add(new CartItem { UserId = 1, ProductId = 3, Quantity = 1 });
+        context.SaveChanges();
+
+        var request = new PlaceOrderRequest
+        {
+            SelectedAddressId = 1,
+            ShippingMethod = "Standard Courier"
+        };
+
+        var result = await checkoutService.PlaceOrderAsync(1, request);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.OrderId);
+
+        var order = await context.Orders.FindAsync(result.OrderId.Value);
+        Assert.NotNull(order);
+        Assert.Equal(15.00m, order.DiscountAmount); // 5% of 300.00 RON
+        Assert.Equal(285.00m, order.TotalAmount); // 300 - 15 + 0 shipping
+    }
+
+    [Fact]
+    public async Task PlaceOrder_RegisteredBundleWithUnrelatedItem_DiscountsOnlyBundleItems()
+    {
+        var (checkoutService, cartService, _, context) = CreateTestEnvironmentWithCart(nameof(PlaceOrder_RegisteredBundleWithUnrelatedItem_DiscountsOnlyBundleItems));
+
+        // Register bundle for Product 1 (Cat 1: 200 RON) and Product 3 (Cat 2: 100 RON)
+        cartService.RegisterBundle(new List<int> { 1, 3 });
+
+        // Add Product 1 (Cat 1: 200 RON), Product 3 (Cat 2: 100 RON), AND unrelated Product 2 (Cat 1: 120 RON)
+        context.CartItems.Add(new CartItem { UserId = 1, ProductId = 1, Quantity = 1 });
+        context.CartItems.Add(new CartItem { UserId = 1, ProductId = 3, Quantity = 1 });
+        context.CartItems.Add(new CartItem { UserId = 1, ProductId = 2, Quantity = 1 });
+        context.SaveChanges();
+
+        var request = new PlaceOrderRequest
+        {
+            SelectedAddressId = 1,
+            ShippingMethod = "Standard Courier"
+        };
+
+        var result = await checkoutService.PlaceOrderAsync(1, request);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.OrderId);
+
+        var order = await context.Orders.FindAsync(result.OrderId.Value);
+        Assert.NotNull(order);
+        // Total subtotal: 200 + 100 + 120 = 420 RON
+        // Bundle items: 200 + 100 = 300 RON -> 5% = 15.00 RON
+        // Standalone Product 2 (120 RON) MUST NOT be discounted!
+        Assert.Equal(15.00m, order.DiscountAmount);
+        Assert.Equal(405.00m, order.TotalAmount); // 420 - 15 + 0 shipping (420 >= 300 threshold)
     }
 }
