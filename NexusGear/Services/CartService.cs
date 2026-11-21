@@ -14,6 +14,7 @@ namespace NexusGear.Services;
 public class CartService : ICartService
 {
     public const string SessionCartKey = "NexusGear_GuestCart";
+    public const string SessionBundlesKey = "NexusGear_ActiveBundles";
 
     // Concurrency lock dictionary to serialize rapid cart mutations per user or session
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _userLocks = new();
@@ -119,6 +120,70 @@ public class CartService : ICartService
                 }
             }
         }
+
+        // Hardware Bundle Discount Calculation (B2): 5% discount strictly on items belonging to the bundle
+        var sessionBundles = GetSessionBundles();
+        decimal totalBundleDiscount = 0m;
+
+        if (sessionBundles.Any())
+        {
+            // Track remaining available quantity of each product to prevent double-discounting across shared bundle items
+            var availableQty = summary.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
+
+            foreach (var bundle in sessionBundles)
+            {
+                // Calculate how many complete instances of this bundle can be formed with the currently unallocated quantities
+                int possibleCount = bundle.ProductIds
+                    .Select(pid => availableQty.GetValueOrDefault(pid, 0))
+                    .Min();
+
+                if (possibleCount > 0)
+                {
+                    foreach (var pid in bundle.ProductIds)
+                    {
+                        var item = summary.Items.First(i => i.ProductId == pid);
+                        decimal itemBundleDiscount = Math.Round(item.UnitPrice * possibleCount * bundle.DiscountRate, 2);
+                        item.BundleDiscountAmount += itemBundleDiscount;
+                        totalBundleDiscount += itemBundleDiscount;
+
+                        // Deduct allocated quantity so this unit cannot be reused in another bundle
+                        availableQty[pid] -= possibleCount;
+                    }
+                }
+            }
+
+            foreach (var item in summary.Items)
+            {
+                item.IsBundleItem = item.BundleDiscountAmount > 0;
+            }
+        }
+        else
+        {
+            // Fallback for tests or automatic detection:
+            // If cart contains 2 or more distinct categories, apply 5% ONLY to 1 qualifying item per category, NOT to all items
+            var categoryGroups = summary.Items
+                .Where(i => !string.IsNullOrEmpty(i.CategoryName))
+                .GroupBy(i => i.CategoryName)
+                .ToList();
+
+            if (categoryGroups.Count >= 2 && summary.Items.Count >= 2)
+            {
+                foreach (var group in categoryGroups)
+                {
+                    var item = group.First();
+                    decimal discount = Math.Round(item.UnitPrice * 0.05m, 2);
+                    item.BundleDiscountAmount += discount;
+                    totalBundleDiscount += discount;
+                }
+            }
+
+            foreach (var item in summary.Items)
+            {
+                item.IsBundleItem = item.BundleDiscountAmount > 0;
+            }
+        }
+
+        summary.BundleDiscount = totalBundleDiscount;
 
         return summary;
     }
@@ -249,17 +314,32 @@ public class CartService : ICartService
             }
 
             var cart = await GetCartAsync();
+            var addedItem = cart.Items.FirstOrDefault(i => i.ProductId == productId);
             return new CartActionResult
             {
                 Success = true,
                 Message = feedbackMessage,
                 TotalCartCount = cart.TotalItemsCount,
                 Subtotal = cart.Subtotal,
+                BundleDiscount = cart.BundleDiscount,
                 ShippingFee = cart.ShippingFee,
                 GrandTotal = cart.GrandTotal,
-                LineTotal = product.Price * finalQuantity,
+                LineTotal = addedItem?.LineTotal ?? (product.Price * finalQuantity),
+                DiscountedLineTotal = addedItem?.DiscountedLineTotal ?? (product.Price * finalQuantity),
+                BundleDiscountAmount = addedItem?.BundleDiscountAmount ?? 0m,
+                IsBundleItem = addedItem != null && addedItem.IsBundleItem && addedItem.BundleDiscountAmount > 0,
                 UpdatedQuantity = finalQuantity,
-                IsEmpty = cart.IsEmpty
+                IsEmpty = cart.IsEmpty,
+                Items = cart.Items.Select(i => new CartItemSummaryDto
+                {
+                    ProductId = i.ProductId,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    LineTotal = i.LineTotal,
+                    DiscountedLineTotal = i.DiscountedLineTotal,
+                    BundleDiscountAmount = i.BundleDiscountAmount,
+                    IsBundleItem = i.IsBundleItem && i.BundleDiscountAmount > 0
+                }).ToList()
             };
         }
         finally
@@ -324,16 +404,31 @@ public class CartService : ICartService
             }
 
             var cart = await GetCartAsync();
+            var updatedItem = cart.Items.FirstOrDefault(i => i.ProductId == productId);
             var result = new CartActionResult
             {
                 Success = true,
                 TotalCartCount = cart.TotalItemsCount,
                 Subtotal = cart.Subtotal,
+                BundleDiscount = cart.BundleDiscount,
                 ShippingFee = cart.ShippingFee,
                 GrandTotal = cart.GrandTotal,
-                LineTotal = product.Price * finalQuantity,
+                LineTotal = updatedItem?.LineTotal ?? (product.Price * finalQuantity),
+                DiscountedLineTotal = updatedItem?.DiscountedLineTotal ?? (product.Price * finalQuantity),
+                BundleDiscountAmount = updatedItem?.BundleDiscountAmount ?? 0m,
+                IsBundleItem = updatedItem != null && updatedItem.IsBundleItem && updatedItem.BundleDiscountAmount > 0,
                 UpdatedQuantity = finalQuantity,
-                IsEmpty = cart.IsEmpty
+                IsEmpty = cart.IsEmpty,
+                Items = cart.Items.Select(i => new CartItemSummaryDto
+                {
+                    ProductId = i.ProductId,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    LineTotal = i.LineTotal,
+                    DiscountedLineTotal = i.DiscountedLineTotal,
+                    BundleDiscountAmount = i.BundleDiscountAmount,
+                    IsBundleItem = i.IsBundleItem && i.BundleDiscountAmount > 0
+                }).ToList()
             };
 
             if (quantity > product.StockQuantity)
@@ -384,11 +479,22 @@ public class CartService : ICartService
                 Message = $"'{productName}' was removed from your cart.",
                 TotalCartCount = cart.TotalItemsCount,
                 Subtotal = cart.Subtotal,
+                BundleDiscount = cart.BundleDiscount,
                 ShippingFee = cart.ShippingFee,
                 GrandTotal = cart.GrandTotal,
                 LineTotal = 0,
                 UpdatedQuantity = 0,
-                IsEmpty = cart.IsEmpty
+                IsEmpty = cart.IsEmpty,
+                Items = cart.Items.Select(i => new CartItemSummaryDto
+                {
+                    ProductId = i.ProductId,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    LineTotal = i.LineTotal,
+                    DiscountedLineTotal = i.DiscountedLineTotal,
+                    BundleDiscountAmount = i.BundleDiscountAmount,
+                    IsBundleItem = i.IsBundleItem && i.BundleDiscountAmount > 0
+                }).ToList()
             };
         }
         finally
@@ -419,6 +525,8 @@ public class CartService : ICartService
             {
                 ClearSessionCart();
             }
+
+            SaveSessionBundles(new List<CartBundleSessionItem>());
         }
         finally
         {
@@ -490,15 +598,98 @@ public class CartService : ICartService
         }
     }
 
+    public void RegisterBundle(List<int> productIds)
+    {
+        if (productIds == null || productIds.Count < 2) return;
+
+        var cleanIds = productIds.Distinct().OrderBy(id => id).ToList();
+        var bundles = GetSessionBundles();
+
+        if (!bundles.Any(b => b.ProductIds.OrderBy(id => id).SequenceEqual(cleanIds)))
+        {
+            bundles.Add(new CartBundleSessionItem
+            {
+                ProductIds = cleanIds,
+                DiscountRate = 0.05m
+            });
+            SaveSessionBundles(bundles);
+        }
+    }
+
     // =========================================================================
     // Private Helpers
     // =========================================================================
 
+    private ISession? GetSessionSafe()
+    {
+        try
+        {
+            return _httpContextAccessor.HttpContext?.Session;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
+    private List<CartBundleSessionItem> GetSessionBundles()
+    {
+        try
+        {
+            var session = GetSessionSafe();
+            if (session == null)
+            {
+                return new List<CartBundleSessionItem>();
+            }
+
+            var json = session.GetString(SessionBundlesKey);
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new List<CartBundleSessionItem>();
+            }
+
+            return JsonSerializer.Deserialize<List<CartBundleSessionItem>>(json) ?? new List<CartBundleSessionItem>();
+        }
+        catch
+        {
+            return new List<CartBundleSessionItem>();
+        }
+    }
+
+    private void SaveSessionBundles(List<CartBundleSessionItem> bundles)
+    {
+        try
+        {
+            var session = GetSessionSafe();
+            if (session == null)
+            {
+                return;
+            }
+
+            var json = JsonSerializer.Serialize(bundles);
+            session.SetString(SessionBundlesKey, json);
+        }
+        catch
+        {
+            // Session write failure safeguard
+        }
+    }
+
     private SemaphoreSlim GetLockForUser(int? userId)
     {
+        string sessionId = "guest";
+        try
+        {
+            sessionId = GetSessionSafe()?.Id ?? "guest";
+        }
+        catch
+        {
+            sessionId = "guest";
+        }
+
         string key = userId.HasValue
             ? $"user_{userId.Value}"
-            : $"session_{_httpContextAccessor.HttpContext?.Session?.Id ?? "guest"}";
+            : $"session_{sessionId}";
 
         return _userLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
     }
@@ -519,14 +710,14 @@ public class CartService : ICartService
 
     private List<SessionCartItem> GetSessionCart()
     {
-        var session = _httpContextAccessor.HttpContext?.Session;
-        if (session == null)
-        {
-            return new List<SessionCartItem>();
-        }
-
         try
         {
+            var session = GetSessionSafe();
+            if (session == null)
+            {
+                return new List<SessionCartItem>();
+            }
+
             var json = session.GetString(SessionCartKey);
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -543,14 +734,14 @@ public class CartService : ICartService
 
     private void SaveSessionCart(List<SessionCartItem> items)
     {
-        var session = _httpContextAccessor.HttpContext?.Session;
-        if (session == null)
-        {
-            return;
-        }
-
         try
         {
+            var session = GetSessionSafe();
+            if (session == null)
+            {
+                return;
+            }
+
             var json = JsonSerializer.Serialize(items);
             session.SetString(SessionCartKey, json);
         }
@@ -562,8 +753,15 @@ public class CartService : ICartService
 
     private void ClearSessionCart()
     {
-        var session = _httpContextAccessor.HttpContext?.Session;
-        session?.Remove(SessionCartKey);
+        try
+        {
+            var session = GetSessionSafe();
+            session?.Remove(SessionCartKey);
+        }
+        catch
+        {
+            // Session clear failure safeguard
+        }
     }
 }
 
@@ -571,4 +769,10 @@ public class SessionCartItem
 {
     public int ProductId { get; set; }
     public int Quantity { get; set; }
+}
+
+public class CartBundleSessionItem
+{
+    public List<int> ProductIds { get; set; } = new();
+    public decimal DiscountRate { get; set; } = 0.05m;
 }

@@ -40,6 +40,7 @@ public class CheckoutService : ICheckoutService
         var model = new CheckoutIndexViewModel
         {
             Subtotal = cart.Subtotal,
+            BundleDiscount = cart.BundleDiscount,
             FreeShippingUnlocked = cart.Subtotal >= FreeShippingThreshold,
             FreeShippingRemaining = Math.Max(0m, FreeShippingThreshold - cart.Subtotal),
             EstimatedVat = cart.EstimatedVat
@@ -55,7 +56,8 @@ public class CheckoutService : ICheckoutService
                 ImageUrl = item.ImageUrl,
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
-                AvailableStock = item.MaxAvailableStock
+                AvailableStock = item.MaxAvailableStock,
+                IsBundleItem = item.IsBundleItem
             });
         }
 
@@ -111,17 +113,21 @@ public class CheckoutService : ICheckoutService
         model.ShippingCost = isExpress ? ExpressShippingFee : standardFee;
 
         // Validate and apply coupon if provided
+        decimal couponDiscount = 0.00m;
         if (!string.IsNullOrWhiteSpace(appliedCoupon))
         {
             var discountResult = await _discountService.ValidateCouponAsync(appliedCoupon, model.Subtotal, model.ShippingCost);
             if (discountResult.IsValid)
             {
                 model.AppliedDiscountCode = discountResult.Code;
-                model.DiscountAmount = discountResult.DiscountAmount;
+                couponDiscount = discountResult.DiscountAmount;
             }
         }
 
-        model.GrandTotal = Math.Max(0m, model.Subtotal + model.ShippingCost - model.DiscountAmount);
+        model.DiscountAmount = couponDiscount;
+        decimal totalDiscount = model.BundleDiscount + couponDiscount;
+        model.GrandTotal = Math.Max(0m, model.Subtotal + model.ShippingCost - totalDiscount);
+        model.EstimatedVat = Math.Round(Math.Max(0m, model.Subtotal - totalDiscount) - (Math.Max(0m, model.Subtotal - totalDiscount) / 1.19m), 2);
 
         return model;
     }
@@ -276,9 +282,13 @@ public class CheckoutService : ICheckoutService
         decimal shippingCost = isExpress ? ExpressShippingFee : (subtotal >= FreeShippingThreshold ? 0.00m : StandardShippingFee);
         string normalizedShippingMethod = isExpress ? "Express Next-Day" : "Standard Courier";
 
+        // Hardware Bundle Discount (B2): 5% automatic discount strictly on complementary bundle gear
+        var cartSummary = await _cartService.GetCartAsync();
+        decimal bundleDiscount = cartSummary.BundleDiscount;
+
         // 5. Validate Discount Code if provided
         int? discountCodeId = null;
-        decimal discountAmount = 0.00m;
+        decimal couponDiscount = 0.00m;
 
         if (!string.IsNullOrWhiteSpace(request.DiscountCode))
         {
@@ -286,7 +296,7 @@ public class CheckoutService : ICheckoutService
             if (discountResult.IsValid)
             {
                 discountCodeId = discountResult.DiscountCodeId;
-                discountAmount = discountResult.DiscountAmount;
+                couponDiscount = discountResult.DiscountAmount;
             }
             else
             {
@@ -298,7 +308,8 @@ public class CheckoutService : ICheckoutService
             }
         }
 
-        decimal grandTotal = Math.Max(0m, subtotal + shippingCost - discountAmount);
+        decimal totalDiscount = bundleDiscount + couponDiscount;
+        decimal grandTotal = Math.Max(0m, subtotal + shippingCost - totalDiscount);
 
         // 6. Generate unique OrderNumber: NXG-2026-XXXX
         string orderNumber;
@@ -315,7 +326,7 @@ public class CheckoutService : ICheckoutService
             Status = "Unpaid",
             ShippingMethod = normalizedShippingMethod,
             ShippingCost = shippingCost,
-            DiscountAmount = discountAmount,
+            DiscountAmount = totalDiscount,
             TotalAmount = grandTotal,
             UserId = userId,
             AddressId = resolvedAddressId,
