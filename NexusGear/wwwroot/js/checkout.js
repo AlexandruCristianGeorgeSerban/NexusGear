@@ -79,6 +79,11 @@ document.addEventListener('DOMContentLoaded', function () {
             ? (parseFloat(summarySubtotal.dataset.subtotal) || 0)
             : parseRonAmount(summarySubtotal ? summarySubtotal.textContent : '0');
 
+        const summaryBundleDiscount = document.getElementById('summaryBundleDiscount');
+        const bundleDiscount = summaryBundleDiscount && summaryBundleDiscount.dataset.bundleDiscount
+            ? (parseFloat(summaryBundleDiscount.dataset.bundleDiscount) || 0)
+            : 0;
+
         if (summaryShippingFee) {
             if (shippingPrice === 0) {
                 summaryShippingFee.innerHTML = '<span class="badge badge-mint fw-bold">FREE</span>';
@@ -87,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        const grandTotal = Math.max(0, subtotal + shippingPrice - currentDiscountAmount);
+        const grandTotal = Math.max(0, subtotal + shippingPrice - bundleDiscount - currentDiscountAmount);
         if (summaryGrandTotal) {
             const formattedTotal = grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             summaryGrandTotal.innerHTML = `${formattedTotal} <span class="fs-6 text-white">RON</span>`;
