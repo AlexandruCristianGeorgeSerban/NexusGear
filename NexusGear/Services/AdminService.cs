@@ -604,4 +604,164 @@ public class AdminService : IAdminService
 
         return $"/uploads/products/{uniqueFileName}";
     }
+
+    // ==========================================
+    // Category Management (A9 CRUD)
+    // ==========================================
+
+    public async Task<AdminCategoryListViewModel> GetAdminCategoriesAsync()
+    {
+        var categories = await _context.Categories
+            .Include(c => c.Products)
+            .OrderBy(c => c.Name)
+            .Select(c => new AdminCategoryRowViewModel
+            {
+                CategoryId = c.CategoryId,
+                Name = c.Name,
+                Slug = c.Slug,
+                Description = c.Description,
+                ProductCount = c.Products.Count
+            })
+            .ToListAsync();
+
+        return new AdminCategoryListViewModel
+        {
+            Categories = categories
+        };
+    }
+
+    public async Task<AdminCategoryFormViewModel?> PrepareEditCategoryFormAsync(int categoryId)
+    {
+        var category = await _context.Categories
+            .Include(c => c.Products)
+            .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
+
+        if (category == null) return null;
+
+        return new AdminCategoryFormViewModel
+        {
+            CategoryId = category.CategoryId,
+            Name = category.Name,
+            Slug = category.Slug,
+            Description = category.Description,
+            AssociatedProductCount = category.Products.Count
+        };
+    }
+
+    public async Task<(bool Success, string Message)> CreateCategoryAsync(AdminCategoryFormViewModel model)
+    {
+        try
+        {
+            var name = model.Name.Trim();
+            var slug = string.IsNullOrWhiteSpace(model.Slug)
+                ? GenerateSlug(name)
+                : model.Slug.Trim().ToLowerInvariant();
+
+            // Validate slug uniqueness
+            var slugExists = await _context.Categories.AnyAsync(c => c.Slug == slug);
+            if (slugExists)
+            {
+                return (false, $"A category with slug '{slug}' already exists. Please choose a different name or slug.");
+            }
+
+            var category = new Category
+            {
+                Name = name,
+                Slug = slug,
+                Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim()
+            };
+
+            _context.Categories.Add(category);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Admin created category '{Name}' (ID: {Id}, Slug: '{Slug}')", category.Name, category.CategoryId, category.Slug);
+            return (true, $"Category '{category.Name}' created successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create category");
+            return (false, $"Failed to create category: {ex.Message}");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> EditCategoryAsync(AdminCategoryFormViewModel model)
+    {
+        if (!model.CategoryId.HasValue)
+        {
+            return (false, "Category ID is missing.");
+        }
+
+        try
+        {
+            var category = await _context.Categories.FindAsync(model.CategoryId.Value);
+            if (category == null)
+            {
+                return (false, "Category not found.");
+            }
+
+            var name = model.Name.Trim();
+            var slug = string.IsNullOrWhiteSpace(model.Slug)
+                ? GenerateSlug(name)
+                : model.Slug.Trim().ToLowerInvariant();
+
+            // Validate slug uniqueness against other categories
+            var slugExists = await _context.Categories.AnyAsync(c => c.Slug == slug && c.CategoryId != model.CategoryId.Value);
+            if (slugExists)
+            {
+                return (false, $"Another category with slug '{slug}' already exists.");
+            }
+
+            category.Name = name;
+            category.Slug = slug;
+            category.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Admin updated category '{Name}' (ID: {Id})", category.Name, category.CategoryId);
+            return (true, $"Category '{category.Name}' updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update category {CategoryId}", model.CategoryId);
+            return (false, $"Failed to update category: {ex.Message}");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> DeleteCategoryAsync(int categoryId)
+    {
+        try
+        {
+            var category = await _context.Categories
+                .Include(c => c.Products)
+                .FirstOrDefaultAsync(c => c.CategoryId == categoryId);
+
+            if (category == null)
+            {
+                return (false, "Category not found.");
+            }
+
+            if (category.Products.Any())
+            {
+                return (false, $"Cannot delete category '{category.Name}' because it contains {category.Products.Count} active product(s). Please reassign or delete the products first.");
+            }
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Admin deleted category '{Name}' (ID: {Id})", category.Name, categoryId);
+            return (true, $"Category '{category.Name}' has been deleted.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete category {CategoryId}", categoryId);
+            return (false, $"Failed to delete category: {ex.Message}");
+        }
+    }
+
+    private static string GenerateSlug(string text)
+    {
+        var str = text.ToLowerInvariant().Trim();
+        str = System.Text.RegularExpressions.Regex.Replace(str, @"[^a-z0-9\s-]", "");
+        str = System.Text.RegularExpressions.Regex.Replace(str, @"\s+", "-").Trim('-');
+        return string.IsNullOrWhiteSpace(str) ? $"cat-{Guid.NewGuid():N}"[..10] : str;
+    }
 }
