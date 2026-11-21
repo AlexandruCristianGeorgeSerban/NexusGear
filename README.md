@@ -102,10 +102,45 @@ dotnet run --project NexusGear
 As required by the course specification, the following AI tools were utilized during Stage 1:
 
 * **Google Gemini**: Consulted for analyzing project specifications and grading criteria, structuring the project planning and roadmap, drafting documentation (README, gitignore rules), and generating SVG brand assets.
-* **OpenAI ChatGPT**: Used for drafting the initial slide outline and assisting with presentation content generation.
+* **OpenAI ChatGPT**: Used for drafting the initial slide outline and assisting with presentation content generation with prompts provided by Google Gemini.
 
 As required by the course specification, the following AI tools were utilized during Stage 2:
 
 * **Antigravity IDE & Google Gemini**: Assisting with the architectural scaffolding of the ASP.NET Core (.NET 10 MVC) layered monolith, configuring the modern `.slnx` solution format, implementing the 3NF relational database entities (11 tables including the `HAS_ADDRESS` M:N address book, `RepositoryWrapper`, and `Unit of Work`), developing the catalog search/filtering/recommendation algorithms, and writing the 53 automated xUnit tests (`NexusGear.Tests`).
 * **Google Gemini**: Generating 30 photorealistic studio product illustrations (`Product_1.png` – `Product_30.png`) across all 4 store categories (mechanical keyboards, gaming mice, deskmats, and ergonomic gaming chairs) to deliver a cohesive "Dark Tech" visual identity.
-* **OpenAI ChatGPT & Google Gemini**: Assisting with specification consistency analysis, refining technical documentation formatting, and structuring the P2 presentation and 8-page technical specification report.
+* **OpenAI ChatGPT**: Assisting with specification consistency analysis, refining technical documentation formatting, and structuring the P2 presentation and technical specification report with prompts provided by Antigravity IDE.
+
+As required by the course specification, the following AI tools were utilized during Stage 3:
+
+* **Antigravity IDE & Google Gemini**: Core full-stack engineering and development environment used for implementing Stage 3 deliverables: designing and implementing the smart hardware bundle scoping algorithm with unallocated quantity allocation (B2), real-time multi-row AJAX cart synchronization (`syncCartItemsDom`), Stripe Checkout Sandbox integration with HMAC cryptographic webhook verification and offline local payment simulator fallback (A6), atomic inventory decrement with `ConcurrencyCheck` tokens and automated restock on order cancellation (A7), transactional HTML order confirmation emails via Mailtrap SMTP (B6), verified buyer review moderation gates (B3), Chart.js sales analytics dashboard with dynamic interval aggregations (B4), and expanding the automated test suite from 53 to 107 passing xUnit tests (`NexusGear.Tests`).
+* **OpenAI ChatGPT**: Used for generating and refining the final P3 presentation slide deck (`NexusGear_P3_Presentation`) and structuring the comprehensive project technical report based on the architectural specifications, component blueprints, and prompts provided by Antigravity IDE.
+
+---
+
+## 🔑 Demonstration Accounts & Test Data
+
+For grading evaluation and local demonstration, the database is pre-seeded with the following credentials:
+
+| Role | Email | Password | Access / Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Administrator** | `admin@nexusgear.ro` | `Admin123!` | Admin Back-Office (`/Admin`), Sales Analytics Dashboard (Chart.js), Order state transitions, Product CRUD with image upload, Review moderation |
+| **Customer** | `customer@nexusgear.ro` | `Customer123!` | Customer Storefront, Saved address book, Wishlist management, Order history with status stepper, Verified buyer review submission |
+
+### 🎟️ Preconfigured Promo Codes (B5)
+
+* `NEXUS10` — 10% percentage discount on entire cart subtotal (Active, max 100 uses).
+* `SETUP50` — \$50.00 fixed-amount discount on entire cart subtotal (Active, max 50 uses).
+* `EXPIRED20` — 20% discount (Expired, triggers graceful validation failure banner for demonstration).
+
+---
+
+## 📁 Milestone Deliverables
+
+* **P1 (Team Setup & Planning)**: [`Presentations/P1/`](Presentations/P1/)
+  * `NexusGear_P1_Team_Setup_and_Planning.pptx` / `NexusGear_P1_Team_Setup_and_Planning.pdf`
+* **P2 (Specification & Prototype)**: [`Presentations/P2/`](Presentations/P2/)
+  * `NexusGear_P2_Presentation.pptx` / `NexusGear_P2_Presentation.pdf`
+  * `NexusGear_P2_Technical_Specification.docx` / `NexusGear_P2_Technical_Specification.pdf`
+* **P3 (Final Delivery & Comprehensive Evaluation)**: [`Presentations/P3/`](Presentations/P3/)
+  * `NexusGear_P3_Presentation_Final.pptx` / `NexusGear_P3_Presentation_Final.pdf`
+  * `NexusGear_P3_Final_Report.docx` / `NexusGear_P3_Final_Report.pdf`
