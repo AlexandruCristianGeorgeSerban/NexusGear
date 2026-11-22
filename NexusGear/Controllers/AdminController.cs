@@ -215,4 +215,97 @@ public class AdminController : Controller
 
         return RedirectToAction(nameof(Products));
     }
+
+    // ==========================================
+    // Category Management (A9 CRUD)
+    // ==========================================
+
+    [HttpGet]
+    public async Task<IActionResult> Categories()
+    {
+        var model = await _adminService.GetAdminCategoriesAsync();
+        return View(model);
+    }
+
+    [HttpGet]
+    public IActionResult CreateCategory()
+    {
+        return View("CategoryForm", new AdminCategoryFormViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateCategory(AdminCategoryFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("CategoryForm", model);
+        }
+
+        var result = await _adminService.CreateCategoryAsync(model);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+            return RedirectToAction(nameof(Categories));
+        }
+
+        TempData["ErrorMessage"] = result.Message;
+        return View("CategoryForm", model);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> EditCategory(int id)
+    {
+        var model = await _adminService.PrepareEditCategoryFormAsync(id);
+        if (model == null)
+        {
+            TempData["ErrorMessage"] = $"Category #{id} not found.";
+            return RedirectToAction(nameof(Categories));
+        }
+
+        return View("CategoryForm", model);
+    }
+
+    [HttpPost]
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditCategory(AdminCategoryFormViewModel model, int? id = null)
+    {
+        if (!model.CategoryId.HasValue && id.HasValue)
+        {
+            model.CategoryId = id.Value;
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View("CategoryForm", model);
+        }
+
+        var result = await _adminService.EditCategoryAsync(model);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+            return RedirectToAction(nameof(Categories));
+        }
+
+        TempData["ErrorMessage"] = result.Message;
+        return View("CategoryForm", model);
+    }
+
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteCategory(int id)
+    {
+        var result = await _adminService.DeleteCategoryAsync(id);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+        }
+        else
+        {
+            TempData["ErrorMessage"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Categories));
+    }
 }
