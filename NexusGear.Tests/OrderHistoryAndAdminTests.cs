@@ -542,4 +542,92 @@ public class OrderHistoryAndAdminTests : IDisposable
         var deleted = await context.Categories.FindAsync(99);
         Assert.Null(deleted);
     }
+
+    [Fact]
+    public async Task AdminService_GetAdminReviews_ReturnsAllReviewsAndFiltersByVisibility()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        context.Reviews.AddRange(
+            new Review { ReviewId = 1, UserId = 2, ProductId = 1, Rating = 5, Comment = "First visible review", IsHidden = false, CreatedAt = DateTime.UtcNow.AddDays(-2) },
+            new Review { ReviewId = 2, UserId = 3, ProductId = 1, Rating = 1, Comment = "Inappropriate spam comment", IsHidden = true, CreatedAt = DateTime.UtcNow.AddDays(-1) }
+        );
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act 1: Get All
+        var allResult = await adminService.GetAdminReviewsAsync("All");
+        Assert.Equal(2, allResult.TotalReviewsCount);
+        Assert.Equal(1, allResult.VisibleReviewsCount);
+        Assert.Equal(1, allResult.HiddenReviewsCount);
+
+        // Act 2: Filter Hidden Only
+        var hiddenResult = await adminService.GetAdminReviewsAsync("Hidden");
+        Assert.Single(hiddenResult.Reviews);
+        Assert.Equal(2, hiddenResult.Reviews[0].ReviewId);
+        Assert.True(hiddenResult.Reviews[0].IsHidden);
+
+        // Act 3: Filter Visible Only
+        var visibleResult = await adminService.GetAdminReviewsAsync("Visible");
+        Assert.Single(visibleResult.Reviews);
+        Assert.Equal(1, visibleResult.Reviews[0].ReviewId);
+        Assert.False(visibleResult.Reviews[0].IsHidden);
+    }
+
+    [Fact]
+    public async Task AdminService_ToggleReviewVisibility_HidesAndUnhidesReview()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        context.Reviews.Add(new Review
+        {
+            ReviewId = 10,
+            UserId = 2,
+            ProductId = 1,
+            Rating = 4,
+            Comment = "Solid typing experience.",
+            IsHidden = false,
+            CreatedAt = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act 1: Toggle from visible -> hidden (B3 Admin Moderation)
+        var result1 = await adminService.ToggleReviewVisibilityAsync(10);
+        Assert.True(result1.Success);
+        Assert.True(result1.IsHidden);
+
+        var reviewAfterFirstToggle = await context.Reviews.FindAsync(10);
+        Assert.NotNull(reviewAfterFirstToggle);
+        Assert.True(reviewAfterFirstToggle.IsHidden);
+
+        // Act 2: Toggle from hidden -> visible
+        var result2 = await adminService.ToggleReviewVisibilityAsync(10);
+        Assert.True(result2.Success);
+        Assert.False(result2.IsHidden);
+
+        var reviewAfterSecondToggle = await context.Reviews.FindAsync(10);
+        Assert.NotNull(reviewAfterSecondToggle);
+        Assert.False(reviewAfterSecondToggle.IsHidden);
+    }
+
+    [Fact]
+    public async Task AdminService_ToggleReviewVisibility_NonExistentReview_ReturnsFailure()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act
+        var result = await adminService.ToggleReviewVisibilityAsync(99999);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("not found", result.Message);
+    }
 }

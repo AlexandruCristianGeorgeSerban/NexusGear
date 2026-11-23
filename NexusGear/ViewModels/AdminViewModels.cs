@@ -169,3 +169,27 @@ public class AdminCategoryFormViewModel
 
     public int AssociatedProductCount { get; set; }
 }
+
+public class AdminReviewListViewModel
+{
+    public List<AdminReviewRowViewModel> Reviews { get; set; } = new();
+    public int TotalReviewsCount => Reviews.Count;
+    public int VisibleReviewsCount => Reviews.Count(r => !r.IsHidden);
+    public int HiddenReviewsCount => Reviews.Count(r => r.IsHidden);
+    public string Filter { get; set; } = "All"; // "All", "Visible", "Hidden"
+    public string? SearchTerm { get; set; }
+}
+
+public class AdminReviewRowViewModel
+{
+    public int ReviewId { get; set; }
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public string ProductImageUrl { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public string CustomerEmail { get; set; } = string.Empty;
+    public int Rating { get; set; }
+    public string Comment { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public bool IsHidden { get; set; }
+}

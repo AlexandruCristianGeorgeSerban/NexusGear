@@ -353,7 +353,7 @@ public class CatalogController : Controller
             canUserReview = await _context.Orders
                 .AsNoTracking()
                 .AnyAsync(o => o.UserId == currentUserId.Value &&
-                               o.Status != "Cancelled" &&
+                               (o.Status == "Paid" || o.Status == "Shipped" || o.Status == "Delivered" || o.Status == "Completed") &&
                                o.OrderItems.Any(oi => oi.ProductId == id));
 
             var existingReview = await _context.Reviews
