@@ -157,8 +157,13 @@ public class CheckoutController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SimulatePayment(int orderId)
+    public async Task<IActionResult> SimulatePayment(int orderId, string? testCardType = null)
     {
+        if (string.Equals(testCardType, "declined", StringComparison.OrdinalIgnoreCase))
+        {
+            return await SimulateDeclinedPayment(orderId);
+        }
+
         var userId = GetCurrentUserId();
         if (userId == null) return Challenge();
 
@@ -171,6 +176,30 @@ public class CheckoutController : Controller
         }
 
         TempData["SuccessMessage"] = $"Payment for Order {result.OrderNumber} confirmed via Stripe sandbox webhook!";
+        return RedirectToAction(nameof(Confirmation), new { id = orderId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SimulateDeclinedPayment(int orderId)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Challenge();
+
+        var order = await _checkoutService.GetOrderConfirmationAsync(orderId, userId.Value);
+        if (order == null)
+        {
+            TempData["ErrorMessage"] = "Order not found or unauthorized.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        if (order.Status == "Paid")
+        {
+            TempData["ErrorMessage"] = $"Order #{order.OrderNumber} has already been paid.";
+            return RedirectToAction(nameof(Confirmation), new { id = orderId });
+        }
+
+        TempData["ErrorMessage"] = $"Payment Failed: Your card was declined by the issuer (Stripe Test Card 4000 0000 0000 0002). Order #{order.OrderNumber} remains Unpaid.";
         return RedirectToAction(nameof(Confirmation), new { id = orderId });
     }
 
