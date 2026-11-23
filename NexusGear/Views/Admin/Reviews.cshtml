@@ -1,0 +1,213 @@
+@model NexusGear.ViewModels.AdminReviewListViewModel
+@{
+    ViewData["Title"] = "Customer Review Moderation — NexusGear Admin";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none text-muted">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">Review Moderation</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="nexus-card-static p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h1 class="h3 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                    <i class="bi bi-chat-square-quote text-mint"></i> Customer Review Moderation
+                </h1>
+                <p class="text-muted small mb-0">Inspect community feedback, moderate customer reviews, and toggle visibility across the storefront catalog.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Dashboard
+                </a>
+                <a asp-action="Orders" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-seam me-1"></i> Orders
+                </a>
+                <a asp-action="Products" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-cpu me-1"></i> Products
+                </a>
+                <a asp-action="Categories" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-tags me-1"></i> Categories
+                </a>
+            </div>
+        </div>
+
+        <!-- Metric Summary Bar -->
+        <div class="row g-3 mt-3 pt-3 border-top border-secondary border-opacity-25">
+            <div class="col-4 col-md">
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted very-small d-block text-uppercase">Total Reviews</span>
+                    <strong class="text-white fs-5">@Model.TotalReviewsCount</strong>
+                </div>
+            </div>
+            <div class="col-4 col-md">
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted very-small d-block text-uppercase">Visible in Catalog</span>
+                    <strong class="text-mint fs-5">@Model.VisibleReviewsCount</strong>
+                </div>
+            </div>
+            <div class="col-4 col-md">
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted very-small d-block text-uppercase">Hidden by Admin</span>
+                    <strong class="text-warning fs-5">@Model.HiddenReviewsCount</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="row g-3 align-items-center mt-2 pt-3 border-top border-secondary border-opacity-25">
+            <div class="col-md-5">
+                <div class="d-flex flex-wrap gap-2">
+                    <a asp-action="Reviews" asp-route-filter="All" asp-route-search="@Model.SearchTerm"
+                       class="btn btn-sm @(Model.Filter == "All" ? "btn-tech" : "btn-outline-secondary text-muted") py-1 px-3 rounded-pill fw-medium">
+                        All Reviews
+                    </a>
+                    <a asp-action="Reviews" asp-route-filter="Visible" asp-route-search="@Model.SearchTerm"
+                       class="btn btn-sm @(Model.Filter == "Visible" ? "btn-tech" : "btn-outline-secondary text-muted") py-1 px-3 rounded-pill fw-medium">
+                        Visible Only
+                    </a>
+                    <a asp-action="Reviews" asp-route-filter="Hidden" asp-route-search="@Model.SearchTerm"
+                       class="btn btn-sm @(Model.Filter == "Hidden" ? "btn-tech" : "btn-outline-secondary text-muted") py-1 px-3 rounded-pill fw-medium">
+                        Hidden Only
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <form method="get" asp-action="Reviews" class="d-flex gap-2 justify-content-md-end">
+                    @if (!string.IsNullOrWhiteSpace(Model.Filter) && Model.Filter != "All")
+                    {
+                        <input type="hidden" name="filter" value="@Model.Filter" />
+                    }
+                    <input type="text" name="search" value="@Model.SearchTerm" class="form-control form-control-nexus form-control-sm" style="max-width: 280px;" placeholder="Search product, customer, text..." />
+                    <button type="submit" class="btn btn-tech btn-sm px-3">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <a asp-action="Reviews" asp-route-filter="@Model.Filter" class="btn btn-outline-danger btn-sm" title="Clear Search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Table -->
+    @if (!Model.Reviews.Any())
+    {
+        <div class="nexus-card-static p-5 text-center">
+            <i class="bi bi-chat-square-quote text-muted display-4 d-block mb-3"></i>
+            <h5 class="text-white fw-bold mb-2">No reviews found</h5>
+            <p class="text-muted small mb-0">No customer reviews match your active filter or search query.</p>
+        </div>
+    }
+    else
+    {
+        <div class="nexus-card-static p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0 align-middle">
+                    <thead style="background-color: #0f172a; border-bottom: 1px solid rgba(148, 163, 184, 0.2);">
+                        <tr class="text-muted small text-uppercase">
+                            <th scope="col" class="ps-4 py-3">Hardware Product</th>
+                            <th scope="col" class="py-3">Verified Buyer</th>
+                            <th scope="col" class="py-3">Rating</th>
+                            <th scope="col" class="py-3" style="min-width: 280px;">Review Comment</th>
+                            <th scope="col" class="py-3 text-center">Catalog Visibility</th>
+                            <th scope="col" class="pe-4 py-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var review in Model.Reviews)
+                        {
+                            <tr style="border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
+                                <td class="ps-4 py-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="@review.ProductImageUrl" alt="@review.ProductName" class="rounded object-fit-contain bg-black border border-secondary border-opacity-25" style="width: 44px; height: 44px;" />
+                                        <div>
+                                            <a asp-controller="Catalog" asp-action="Details" asp-route-id="@review.ProductId" class="fw-bold text-white text-decoration-none text-truncate d-block" style="max-width: 180px;" title="@review.ProductName">
+                                                @review.ProductName
+                                            </a>
+                                            <span class="text-muted very-small" style="font-size: 0.72rem;">ID: #@review.ProductId</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <div class="fw-semibold text-white small">@review.CustomerName</div>
+                                    <span class="text-muted font-monospace very-small d-block" style="font-size: 0.72rem;">@review.CustomerEmail</span>
+                                </td>
+                                <td class="py-3">
+                                    <div class="d-flex align-items-center gap-1">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= review.Rating)
+                                            {
+                                                <i class="bi bi-star-fill text-warning small"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-secondary small"></i>
+                                            }
+                                        }
+                                        <span class="text-white small fw-bold ms-1">@review.Rating/5</span>
+                                    </div>
+                                </td>
+                                <td class="py-3">
+                                    <p class="text-light small mb-1" style="line-height: 1.4;">
+                                        &ldquo;@review.Comment&rdquo;
+                                    </p>
+                                    <span class="text-muted very-small" style="font-size: 0.72rem;">
+                                        <i class="bi bi-clock me-1"></i>@review.CreatedAt.ToString("dd MMM yyyy, HH:mm")
+                                    </span>
+                                </td>
+                                <td class="py-3 text-center">
+                                    @if (!review.IsHidden)
+                                    {
+                                        <span class="badge bg-dark border border-mint text-mint px-3 py-2">
+                                            <i class="bi bi-eye-fill me-1"></i> Visible
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark border border-warning text-warning px-3 py-2">
+                                            <i class="bi bi-eye-slash-fill me-1"></i> Hidden
+                                        </span>
+                                    }
+                                </td>
+                                <td class="pe-4 py-3 text-end">
+                                    <form method="post" asp-action="ToggleReviewVisibility" asp-route-id="@review.ReviewId" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="filter" value="@Model.Filter" />
+                                        <input type="hidden" name="search" value="@Model.SearchTerm" />
+                                        @if (!review.IsHidden)
+                                        {
+                                            <button type="submit" class="btn btn-outline-warning btn-sm" title="Hide this review from storefront catalog">
+                                                <i class="bi bi-eye-slash me-1"></i> Hide
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="submit" class="btn btn-outline-success btn-sm" title="Unhide this review to make it visible in catalog">
+                                                <i class="bi bi-eye me-1"></i> Unhide
+                                            </button>
+                                        }
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 bg-dark border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
+                <span class="text-muted small">Showing <strong class="text-white">@Model.Reviews.Count</strong> community reviews</span>
+                <span class="text-muted very-small" style="font-size: 0.75rem;">Hidden reviews are excluded from storefront catalog calculations and average ratings.</span>
+            </div>
+        </div>
+    }
+</div>
