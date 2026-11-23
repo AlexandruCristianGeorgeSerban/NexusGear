@@ -63,29 +63,42 @@
                         </h2>
 
                         <div class="alert alert-info small bg-dark border-info text-info p-2 px-3 mb-3">
-                            <i class="bi bi-info-circle me-1"></i> <strong>Sandbox Simulation:</strong> The prefilled card is Stripe's standard test Visa (<code>4242 4242 4242 4242</code>). Clicking pay will simulate the verified server-to-server webhook.
+                            <i class="bi bi-info-circle me-1"></i> <strong>Sandbox Simulation:</strong> This offline simulator demonstrates Stripe test transactions. Select a test card profile to simulate payment authorization or issuer decline.
                         </div>
 
-                        <form asp-action="SimulatePayment" method="post">
+                        <form id="stripePaymentForm" asp-action="SimulatePayment" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="orderId" value="@Model.OrderId" />
 
+                            <!-- Test Card Selector -->
                             <div class="mb-3">
-                                <label class="form-label-nexus small">Email</label>
-                                <input type="email" class="form-control form-control-nexus" value="@Model.CustomerEmail" readonly />
+                                <label class="form-label-nexus small">Select Test Card Profile</label>
+                                <select name="testCardType" id="testCardSelect" class="form-select form-control-nexus" onchange="updateSelectedCard(this.value)">
+                                    <option value="approved" selected>4242 4242 4242 4242 — Standard Test Visa (Will Approve)</option>
+                                    <option value="declined">4000 0000 0000 0002 — Declined Test Card (Will Decline)</option>
+                                </select>
+                                <div class="form-text text-muted very-small" id="cardHelpText" style="font-size: 0.75rem;">
+                                    Standard test card: verifies webhook settlement, decrements stock atomically, and marks order as Paid.
+                                </div>
                             </div>
 
+                            <!-- Card Number Display -->
                             <div class="mb-3">
                                 <label class="form-label-nexus small">Card Number</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-dark border-secondary border-opacity-50 text-white">
                                         <i class="bi bi-credit-card"></i>
                                     </span>
-                                    <input type="text" class="form-control form-control-nexus font-monospace" value="4242 •••• •••• 4242" readonly />
-                                    <span class="input-group-text bg-dark border-secondary border-opacity-50">
+                                    <input type="text" id="cardNumberInput" class="form-control form-control-nexus font-monospace" value="4242 4242 4242 4242" readonly />
+                                    <span class="input-group-text bg-dark border-secondary border-opacity-50" id="cardBadge">
                                         <span class="badge bg-primary fw-bold">VISA</span>
                                     </span>
                                 </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label-nexus small">Customer Email</label>
+                                <input type="email" class="form-control form-control-nexus" value="@Model.CustomerEmail" readonly />
                             </div>
 
                             <div class="row g-2 mb-3">
@@ -104,7 +117,8 @@
                                 <input type="text" class="form-control form-control-nexus" value="@Model.CustomerName" readonly />
                             </div>
 
-                            <button type="submit" class="btn btn-tech w-100 py-3 fw-bold fs-6 mb-2">
+                            <!-- Single Pay Button -->
+                            <button type="submit" id="btnPay" class="btn btn-tech w-100 py-3 fw-bold fs-6 mb-3">
                                 <i class="bi bi-lock-fill me-1"></i> Pay @Model.TotalAmount.ToString("N2") RON
                             </button>
 
@@ -114,6 +128,24 @@
                                 </a>
                             </div>
                         </form>
+
+                        <script>
+                            function updateSelectedCard(val) {
+                                const input = document.getElementById('cardNumberInput');
+                                const help = document.getElementById('cardHelpText');
+                                const form = document.getElementById('stripePaymentForm');
+
+                                if (val === 'declined') {
+                                    input.value = '4000 0000 0000 0002';
+                                    help.innerHTML = '<span class="text-warning">Simulated decline card: triggers bank refusal response and leaves order in Unpaid status.</span>';
+                                    form.action = '@Url.Action("SimulateDeclinedPayment")';
+                                } else {
+                                    input.value = '4242 4242 4242 4242';
+                                    help.innerHTML = 'Standard test card: verifies webhook settlement, decrements stock atomically, and marks order as Paid.';
+                                    form.action = '@Url.Action("SimulatePayment")';
+                                }
+                            }
+                        </script>
                     </div>
                 </div>
             </div>

@@ -393,4 +393,138 @@ public class StripeAndInventoryTests : IDisposable
         Assert.Equal(1, redirect.RouteValues?["id"]);
         Assert.NotNull(controller.TempData["SuccessMessage"]);
     }
+
+    [Fact]
+    public async Task SimulateDeclinedPayment_LeavesOrderUnpaidAndRedirectsWithErrorMessage()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var checkoutServiceMock = new Mock<ICheckoutService>();
+        var paymentServiceMock = new Mock<IPaymentService>();
+        var webhookServiceMock = new Mock<IWebhookService>();
+
+        checkoutServiceMock
+            .Setup(c => c.GetOrderConfirmationAsync(1, 1))
+            .ReturnsAsync(new ViewModels.OrderConfirmationViewModel
+            {
+                OrderId = 1,
+                OrderNumber = "NX-TEST-001",
+                Status = "Unpaid",
+                TotalAmount = 299.99m
+            });
+
+        var controller = new CheckoutController(
+            checkoutServiceMock.Object,
+            paymentServiceMock.Object,
+            webhookServiceMock.Object);
+
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, "1") };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
+        controller.TempData = new TempDataDictionary(controller.HttpContext, Mock.Of<ITempDataProvider>());
+
+        // Act: Simulate card decline
+        var actionResult = await controller.SimulateDeclinedPayment(1);
+
+        // Assert: A6 & FAQ - Declined payment leaves order Unpaid and notifies customer
+        var redirect = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Confirmation", redirect.ActionName);
+        Assert.Equal(1, redirect.RouteValues?["id"]);
+
+        var errorMessage = Assert.IsType<string>(controller.TempData["ErrorMessage"]);
+        Assert.Contains("declined", errorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Unpaid", errorMessage);
+    }
+
+    [Fact]
+    public async Task SimulateDeclinedPayment_OrderAlreadyPaid_RejectsWithErrorMessage()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var checkoutServiceMock = new Mock<ICheckoutService>();
+        var paymentServiceMock = new Mock<IPaymentService>();
+        var webhookServiceMock = new Mock<IWebhookService>();
+
+        checkoutServiceMock
+            .Setup(c => c.GetOrderConfirmationAsync(2, 1))
+            .ReturnsAsync(new ViewModels.OrderConfirmationViewModel
+            {
+                OrderId = 2,
+                OrderNumber = "NX-PAID-002",
+                Status = "Paid",
+                TotalAmount = 199.99m
+            });
+
+        var controller = new CheckoutController(
+            checkoutServiceMock.Object,
+            paymentServiceMock.Object,
+            webhookServiceMock.Object);
+
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, "1") };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
+        controller.TempData = new TempDataDictionary(controller.HttpContext, Mock.Of<ITempDataProvider>());
+
+        // Act: Attempt to simulate decline on an already paid order
+        var actionResult = await controller.SimulateDeclinedPayment(2);
+
+        // Assert
+        var redirect = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Confirmation", redirect.ActionName);
+        Assert.Equal(2, redirect.RouteValues?["id"]);
+
+        var errorMessage = Assert.IsType<string>(controller.TempData["ErrorMessage"]);
+        Assert.Contains("already been paid", errorMessage);
+    }
+
+    [Fact]
+    public async Task SimulatePayment_WithDeclinedCardType_RoutesToDeclinedPayment()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var checkoutServiceMock = new Mock<ICheckoutService>();
+        var paymentServiceMock = new Mock<IPaymentService>();
+        var webhookServiceMock = new Mock<IWebhookService>();
+
+        checkoutServiceMock
+            .Setup(c => c.GetOrderConfirmationAsync(1, 1))
+            .ReturnsAsync(new ViewModels.OrderConfirmationViewModel
+            {
+                OrderId = 1,
+                OrderNumber = "NX-TEST-001",
+                Status = "Unpaid",
+                TotalAmount = 299.99m
+            });
+
+        var controller = new CheckoutController(
+            checkoutServiceMock.Object,
+            paymentServiceMock.Object,
+            webhookServiceMock.Object);
+
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, "1") };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
+        controller.TempData = new TempDataDictionary(controller.HttpContext, Mock.Of<ITempDataProvider>());
+
+        // Act: Submit SimulatePayment with testCardType = "declined" (from dropdown selector)
+        var actionResult = await controller.SimulatePayment(1, testCardType: "declined");
+
+        // Assert
+        var redirect = Assert.IsType<RedirectToActionResult>(actionResult);
+        Assert.Equal("Confirmation", redirect.ActionName);
+        Assert.Equal(1, redirect.RouteValues?["id"]);
+
+        var errorMessage = Assert.IsType<string>(controller.TempData["ErrorMessage"]);
+        Assert.Contains("declined", errorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Unpaid", errorMessage);
+    }
 }
