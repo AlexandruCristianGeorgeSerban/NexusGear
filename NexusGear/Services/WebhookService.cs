@@ -215,17 +215,14 @@ public class WebhookService : IWebhookService
             _logger.LogInformation("Order {OrderNumber} successfully confirmed as Paid with atomic inventory deduction.", order.OrderNumber);
 
             // 7. Dispatch Transactional Confirmation Email (B6)
-            _ = Task.Run(async () =>
+            try
             {
-                try
-                {
-                    await _emailService.SendOrderConfirmationEmailAsync(order);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Background email dispatch error for order {OrderNumber}", order.OrderNumber);
-                }
-            });
+                await _emailService.SendOrderConfirmationEmailAsync(order);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Order confirmation email dispatch failed for order {OrderNumber}", order.OrderNumber);
+            }
 
             return new WebhookProcessingResult
             {
