@@ -535,4 +535,90 @@ public class AccountAndReviewTests
         Assert.False(reviewExists);
         Assert.Equal("Only verified buyers who have purchased this product can leave a review.", controller.TempData["ErrorMessage"]);
     }
+
+    [Fact]
+    public async Task Review_UnpaidOrder_IsBlockedFromSubmitting()
+    {
+        // Arrange: User 2 has an order for Product 1, but order is "Unpaid"
+        using var context = CreateInMemoryDbContext(nameof(Review_UnpaidOrder_IsBlockedFromSubmitting));
+        var unpaidOrder = new Order
+        {
+            OrderId = 99,
+            OrderNumber = "ORD-UNPAID-001",
+            UserId = 2,
+            AddressId = 2,
+            Status = "Unpaid",
+            TotalAmount = 189.99m,
+            ShippingMethod = "Standard Courier",
+            OrderDate = DateTime.UtcNow,
+            OrderItems = new List<OrderItem>
+            {
+                new OrderItem { OrderItemId = 99, OrderId = 99, ProductId = 1, Quantity = 1, UnitPrice = 189.99m }
+            }
+        };
+        context.Orders.Add(unpaidOrder);
+        await context.SaveChangesAsync();
+
+        var controller = SetupReviewsController(context, userId: 2);
+        var model = new ReviewSubmissionViewModel
+        {
+            ProductId = 1,
+            Rating = 4,
+            Comment = "Trying to review with an unpaid order."
+        };
+
+        // Act
+        var result = await controller.Submit(model);
+
+        // Assert: B3 buyer gate rejects unpaid orders
+        var redirectResult = Assert.IsType<RedirectResult>(result);
+        Assert.Contains("/Catalog/Details/1#reviews", redirectResult.Url);
+
+        var reviewExists = await context.Reviews.AnyAsync(r => r.UserId == 2 && r.ProductId == 1);
+        Assert.False(reviewExists);
+        Assert.Equal("Only verified buyers who have purchased this product can leave a review.", controller.TempData["ErrorMessage"]);
+    }
+
+    [Fact]
+    public async Task Review_CancelledOrder_IsBlockedFromSubmitting()
+    {
+        // Arrange: User 2 has an order for Product 1, but order is "Cancelled"
+        using var context = CreateInMemoryDbContext(nameof(Review_CancelledOrder_IsBlockedFromSubmitting));
+        var cancelledOrder = new Order
+        {
+            OrderId = 98,
+            OrderNumber = "ORD-CANCEL-001",
+            UserId = 2,
+            AddressId = 2,
+            Status = "Cancelled",
+            TotalAmount = 189.99m,
+            ShippingMethod = "Standard Courier",
+            OrderDate = DateTime.UtcNow,
+            OrderItems = new List<OrderItem>
+            {
+                new OrderItem { OrderItemId = 98, OrderId = 98, ProductId = 1, Quantity = 1, UnitPrice = 189.99m }
+            }
+        };
+        context.Orders.Add(cancelledOrder);
+        await context.SaveChangesAsync();
+
+        var controller = SetupReviewsController(context, userId: 2);
+        var model = new ReviewSubmissionViewModel
+        {
+            ProductId = 1,
+            Rating = 2,
+            Comment = "Trying to review with a cancelled order."
+        };
+
+        // Act
+        var result = await controller.Submit(model);
+
+        // Assert: B3 buyer gate rejects cancelled orders
+        var redirectResult = Assert.IsType<RedirectResult>(result);
+        Assert.Contains("/Catalog/Details/1#reviews", redirectResult.Url);
+
+        var reviewExists = await context.Reviews.AnyAsync(r => r.UserId == 2 && r.ProductId == 1);
+        Assert.False(reviewExists);
+        Assert.Equal("Only verified buyers who have purchased this product can leave a review.", controller.TempData["ErrorMessage"]);
+    }
 }

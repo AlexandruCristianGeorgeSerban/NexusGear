@@ -21,4 +21,7 @@ public interface IAdminService
     Task<(bool Success, string Message)> CreateCategoryAsync(AdminCategoryFormViewModel model);
     Task<(bool Success, string Message)> EditCategoryAsync(AdminCategoryFormViewModel model);
     Task<(bool Success, string Message)> DeleteCategoryAsync(int categoryId);
+
+    Task<AdminReviewListViewModel> GetAdminReviewsAsync(string? filter = "All", string? search = null);
+    Task<(bool Success, string Message, bool IsHidden)> ToggleReviewVisibilityAsync(int reviewId);
 }

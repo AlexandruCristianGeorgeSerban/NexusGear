@@ -764,4 +764,90 @@ public class AdminService : IAdminService
         str = System.Text.RegularExpressions.Regex.Replace(str, @"\s+", "-").Trim('-');
         return string.IsNullOrWhiteSpace(str) ? $"cat-{Guid.NewGuid():N}"[..10] : str;
     }
+
+    // ==========================================
+    // Review Moderation (B3)
+    // ==========================================
+
+    public async Task<AdminReviewListViewModel> GetAdminReviewsAsync(string? filter = "All", string? search = null)
+    {
+        var query = _context.Reviews
+            .Include(r => r.Product)
+            .Include(r => r.User)
+            .AsNoTracking()
+            .AsQueryable();
+
+        // 1. Filter by visibility
+        var normalizedFilter = (filter ?? "All").Trim();
+        if (normalizedFilter.Equals("Visible", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(r => !r.IsHidden);
+        }
+        else if (normalizedFilter.Equals("Hidden", StringComparison.OrdinalIgnoreCase))
+        {
+            query = query.Where(r => r.IsHidden);
+        }
+        else
+        {
+            normalizedFilter = "All";
+        }
+
+        // 2. Filter by search term
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(r =>
+                (r.Product != null && r.Product.Name.ToLower().Contains(term)) ||
+                (r.User != null && (r.User.FullName.ToLower().Contains(term) || r.User.Email.ToLower().Contains(term))) ||
+                r.Comment.ToLower().Contains(term));
+        }
+
+        var reviews = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new AdminReviewRowViewModel
+            {
+                ReviewId = r.ReviewId,
+                ProductId = r.ProductId,
+                ProductName = r.Product != null ? r.Product.Name : "Hardware Item",
+                ProductImageUrl = r.Product != null ? r.Product.ImageUrl : "/images/products/placeholder.webp",
+                CustomerName = r.User != null ? r.User.FullName : "Customer",
+                CustomerEmail = r.User != null ? r.User.Email : "",
+                Rating = r.Rating,
+                Comment = r.Comment,
+                CreatedAt = r.CreatedAt,
+                IsHidden = r.IsHidden
+            })
+            .ToListAsync();
+
+        return new AdminReviewListViewModel
+        {
+            Reviews = reviews,
+            Filter = normalizedFilter,
+            SearchTerm = search
+        };
+    }
+
+    public async Task<(bool Success, string Message, bool IsHidden)> ToggleReviewVisibilityAsync(int reviewId)
+    {
+        try
+        {
+            var review = await _context.Reviews.FindAsync(reviewId);
+            if (review == null)
+            {
+                return (false, $"Review #{reviewId} not found.", false);
+            }
+
+            review.IsHidden = !review.IsHidden;
+            await _context.SaveChangesAsync();
+
+            var statusText = review.IsHidden ? "hidden from storefront catalog" : "unhidden and visible to customers";
+            _logger.LogInformation("Admin toggled review #{ReviewId} visibility to IsHidden={IsHidden}", reviewId, review.IsHidden);
+            return (true, $"Review #{reviewId} is now {statusText}.", review.IsHidden);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to toggle review #{ReviewId} visibility", reviewId);
+            return (false, $"Error updating review visibility: {ex.Message}", false);
+        }
+    }
 }

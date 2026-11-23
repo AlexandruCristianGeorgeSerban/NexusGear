@@ -308,4 +308,32 @@ public class AdminController : Controller
 
         return RedirectToAction(nameof(Categories));
     }
+
+    // ==========================================
+    // Review Moderation (B3)
+    // ==========================================
+
+    [HttpGet]
+    public async Task<IActionResult> Reviews(string? filter = "All", string? search = null)
+    {
+        var model = await _adminService.GetAdminReviewsAsync(filter, search);
+        return View(model);
+    }
+
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleReviewVisibility(int id, string? filter = null, string? search = null)
+    {
+        var result = await _adminService.ToggleReviewVisibilityAsync(id);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+        }
+        else
+        {
+            TempData["ErrorMessage"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Reviews), new { filter, search });
+    }
 }

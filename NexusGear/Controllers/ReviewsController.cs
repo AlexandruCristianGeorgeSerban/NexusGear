@@ -50,11 +50,11 @@ public class ReviewsController : Controller
         }
 
         // B3: Verified Purchase Enforcement
-        // Query if this user has any non-cancelled order containing this product
+        // Query if this user has any paid/delivered order containing this product
         var isVerifiedBuyer = await _context.Orders
             .AsNoTracking()
             .AnyAsync(o => o.UserId == userId &&
-                           o.Status != "Cancelled" &&
+                           (o.Status == "Paid" || o.Status == "Shipped" || o.Status == "Delivered" || o.Status == "Completed") &&
                            o.OrderItems.Any(oi => oi.ProductId == model.ProductId));
 
         if (!isVerifiedBuyer)
