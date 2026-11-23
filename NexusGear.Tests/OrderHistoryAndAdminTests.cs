@@ -396,4 +396,150 @@ public class OrderHistoryAndAdminTests : IDisposable
         Assert.NotNull(product);
         Assert.Equal(0, product.StockQuantity);
     }
+
+    [Fact]
+    public async Task AdminService_GetAdminCategories_ReturnsAllCategoriesWithAccurateProductCounts()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act
+        var result = await adminService.GetAdminCategoriesAsync();
+
+        // Assert (A9)
+        Assert.NotNull(result);
+        Assert.True(result.Categories.Count >= 1);
+        var cat1 = result.Categories.FirstOrDefault(c => c.CategoryId == 1);
+        Assert.NotNull(cat1);
+        Assert.Equal("Mechanical Keyboards", cat1.Name);
+        Assert.Equal("keyboards", cat1.Slug);
+        Assert.Equal(2, cat1.ProductCount); // Product 1 and 2 in seed data
+    }
+
+    [Fact]
+    public async Task AdminService_CreateCategory_GeneratesSlugAndPersistsCategory()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        var form = new AdminCategoryFormViewModel
+        {
+            Name = "Ergonomic Desk Accessories",
+            Description = "Wrist rests, monitor arms, and desk organizers"
+        };
+
+        // Act
+        var result = await adminService.CreateCategoryAsync(form);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Contains("created successfully", result.Message);
+
+        var savedCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Ergonomic Desk Accessories");
+        Assert.NotNull(savedCat);
+        Assert.Equal("ergonomic-desk-accessories", savedCat.Slug);
+        Assert.Equal("Wrist rests, monitor arms, and desk organizers", savedCat.Description);
+    }
+
+    [Fact]
+    public async Task AdminService_CreateCategory_RejectsDuplicateSlug()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        var duplicateForm = new AdminCategoryFormViewModel
+        {
+            Name = "Mechanical Keyboards Duplicate",
+            Slug = "keyboards" // Already exists in seed data
+        };
+
+        // Act
+        var result = await adminService.CreateCategoryAsync(duplicateForm);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("already exists", result.Message);
+    }
+
+    [Fact]
+    public async Task AdminService_EditCategory_UpdatesNameDescriptionAndSlug()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        var editForm = new AdminCategoryFormViewModel
+        {
+            CategoryId = 1,
+            Name = "Custom Enthusiast Keyboards",
+            Slug = "custom-keyboards",
+            Description = "Hot-swap, wireless, and gasket-mounted mechanical keyboards"
+        };
+
+        // Act
+        var result = await adminService.EditCategoryAsync(editForm);
+
+        // Assert
+        Assert.True(result.Success);
+
+        var updated = await context.Categories.FindAsync(1);
+        Assert.NotNull(updated);
+        Assert.Equal("Custom Enthusiast Keyboards", updated.Name);
+        Assert.Equal("custom-keyboards", updated.Slug);
+        Assert.Equal("Hot-swap, wireless, and gasket-mounted mechanical keyboards", updated.Description);
+    }
+
+    [Fact]
+    public async Task AdminService_DeleteCategory_BlockedWhenCategoryContainsProducts()
+    {
+        // Arrange: Category 1 contains Product 1 and Product 2
+        using var context = new AppDbContext(_contextOptions);
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act
+        var result = await adminService.DeleteCategoryAsync(1);
+
+        // Assert: Referential integrity protection
+        Assert.False(result.Success);
+        Assert.Contains("active product(s)", result.Message);
+
+        var category = await context.Categories.FindAsync(1);
+        Assert.NotNull(category);
+    }
+
+    [Fact]
+    public async Task AdminService_DeleteCategory_SucceedsWhenCategoryHasNoProducts()
+    {
+        // Arrange: Create a temporary empty category
+        using var context = new AppDbContext(_contextOptions);
+        var emptyCat = new Category
+        {
+            CategoryId = 99,
+            Name = "Temporary Hardware",
+            Slug = "temporary-hardware"
+        };
+        context.Categories.Add(emptyCat);
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act
+        var result = await adminService.DeleteCategoryAsync(99);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Contains("deleted", result.Message);
+
+        var deleted = await context.Categories.FindAsync(99);
+        Assert.Null(deleted);
+    }
 }

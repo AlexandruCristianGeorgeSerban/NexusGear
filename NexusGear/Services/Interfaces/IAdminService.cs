@@ -15,4 +15,10 @@ public interface IAdminService
     Task<(bool Success, string Message)> CreateProductAsync(AdminProductFormViewModel model, string uploadsWebRootPath);
     Task<(bool Success, string Message)> EditProductAsync(AdminProductFormViewModel model, string uploadsWebRootPath);
     Task<(bool Success, string Message)> DeleteProductAsync(int productId);
+
+    Task<AdminCategoryListViewModel> GetAdminCategoriesAsync();
+    Task<AdminCategoryFormViewModel?> PrepareEditCategoryFormAsync(int categoryId);
+    Task<(bool Success, string Message)> CreateCategoryAsync(AdminCategoryFormViewModel model);
+    Task<(bool Success, string Message)> EditCategoryAsync(AdminCategoryFormViewModel model);
+    Task<(bool Success, string Message)> DeleteCategoryAsync(int categoryId);
 }

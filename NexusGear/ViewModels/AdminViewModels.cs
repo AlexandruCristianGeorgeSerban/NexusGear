@@ -137,3 +137,35 @@ public class AdminProductFormViewModel
 
     public List<CategorySelectItem> AvailableCategories { get; set; } = new();
 }
+
+public class AdminCategoryListViewModel
+{
+    public List<AdminCategoryRowViewModel> Categories { get; set; } = new();
+    public int TotalCategoriesCount => Categories.Count;
+}
+
+public class AdminCategoryRowViewModel
+{
+    public int CategoryId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public int ProductCount { get; set; }
+}
+
+public class AdminCategoryFormViewModel
+{
+    public int? CategoryId { get; set; }
+
+    [Required(ErrorMessage = "Category name is required.")]
+    [StringLength(100, ErrorMessage = "Category name cannot exceed 100 characters.")]
+    public string Name { get; set; } = string.Empty;
+
+    [StringLength(100, ErrorMessage = "Slug cannot exceed 100 characters.")]
+    [RegularExpression(@"^[a-z0-9\-]*$", ErrorMessage = "Slug can only contain lowercase letters, numbers, and hyphens.")]
+    public string? Slug { get; set; }
+
+    public string? Description { get; set; }
+
+    public int AssociatedProductCount { get; set; }
+}

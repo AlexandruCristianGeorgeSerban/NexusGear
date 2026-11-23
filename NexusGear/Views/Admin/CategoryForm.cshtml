@@ -1,0 +1,97 @@
+@model NexusGear.ViewModels.AdminCategoryFormViewModel
+@{
+    bool isEdit = Model.CategoryId.HasValue;
+    ViewData["Title"] = isEdit ? $"Edit {Model.Name} — NexusGear Admin" : "Create Category — NexusGear Admin";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none text-muted">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-action="Categories" class="text-decoration-none text-muted">Categories</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">@(isEdit ? "Edit Category" : "New Category")</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="nexus-card-static p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div>
+                        <h1 class="h3 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                            <i class="bi @(isEdit ? "bi-pencil-square" : "bi-tags-fill") text-mint"></i>
+                            @(isEdit ? "Edit Category Taxonomy" : "Create New Category")
+                        </h1>
+                        <p class="text-muted small mb-0">Configure store taxonomy, display title, and URL slug routing.</p>
+                    </div>
+                    <a asp-action="Categories" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                </div>
+
+                @if (isEdit && Model.AssociatedProductCount > 0)
+                {
+                    <div class="alert alert-info bg-dark border border-info border-opacity-50 text-white d-flex align-items-center gap-3 mb-4">
+                        <i class="bi bi-info-circle-fill text-info fs-4"></i>
+                        <div class="small">
+                            <strong>Active Associations:</strong> This category is currently assigned to <strong>@Model.AssociatedProductCount product(s)</strong> in the storefront catalog. Changing the slug will update URL navigation immediately.
+                        </div>
+                    </div>
+                }
+
+                <form method="post" asp-action="@(isEdit ? "EditCategory" : "CreateCategory")">
+                    @Html.AntiForgeryToken()
+                    @if (isEdit)
+                    {
+                        <input type="hidden" asp-for="CategoryId" />
+                        <input type="hidden" asp-for="AssociatedProductCount" />
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+                    <!-- Category Name -->
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label-nexus">Category Display Name</label>
+                        <input asp-for="Name" class="form-control form-control-nexus" placeholder="e.g. Ergonomic Gaming Chairs" required />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                        <div class="form-text text-muted very-small" style="font-size: 0.75rem;">
+                            Visible store title in the top navigation bar and catalog filter pills.
+                        </div>
+                    </div>
+
+                    <!-- Slug -->
+                    <div class="mb-3">
+                        <label asp-for="Slug" class="form-label-nexus">URL Slug (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text font-monospace fw-bold" style="background-color: #0f172a; border-color: rgba(148, 163, 184, 0.25); color: #00E5A3 !important;">/catalog?category=</span>
+                            <input asp-for="Slug" class="form-control form-control-nexus font-monospace" placeholder="e.g. ergonomic-chairs" />
+                        </div>
+                        <span asp-validation-for="Slug" class="text-danger small"></span>
+                        <div class="form-text text-muted very-small" style="font-size: 0.75rem;">
+                            URL-friendly identifier. Leave empty to automatically generate from the name.
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label-nexus">Description (Optional)</label>
+                        <textarea asp-for="Description" class="form-control form-control-nexus" rows="3" placeholder="Brief technical taxonomy overview or category summary..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top border-secondary border-opacity-25">
+                        <a asp-action="Categories" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-tech px-4 fw-bold">
+                            <i class="bi @(isEdit ? "bi-check2-circle" : "bi-plus-lg") me-1"></i>
+                            @(isEdit ? "Save Category" : "Create Category")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
