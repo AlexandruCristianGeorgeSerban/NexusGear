@@ -73,8 +73,10 @@ public class ReviewsController : Controller
             existingReview.Rating = model.Rating;
             existingReview.Comment = model.Comment.Trim();
             existingReview.CreatedAt = DateTime.UtcNow;
-            existingReview.IsHidden = false; // Verified reviews are visible
-            TempData["SuccessMessage"] = "Your verified review has been successfully updated!";
+            // Preserve admin moderation state (IsHidden) so hidden reviews cannot be self-unhidden on edit
+            TempData["SuccessMessage"] = existingReview.IsHidden
+                ? "Your review feedback was updated, though visibility remains restricted by administrator moderation."
+                : "Your verified review has been successfully updated!";
         }
         else
         {

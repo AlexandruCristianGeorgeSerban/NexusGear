@@ -621,4 +621,42 @@ public class AccountAndReviewTests
         Assert.False(reviewExists);
         Assert.Equal("Only verified buyers who have purchased this product can leave a review.", controller.TempData["ErrorMessage"]);
     }
+
+    [Fact]
+    public async Task Review_UpdateHiddenReview_PreservesAdminModerationIsHidden()
+    {
+        // Arrange: User 1 already bought Product 1; Admin hid User 1's review (IsHidden = true)
+        using var context = CreateInMemoryDbContext(nameof(Review_UpdateHiddenReview_PreservesAdminModerationIsHidden));
+        context.Reviews.Add(new Review
+        {
+            ReviewId = 77,
+            UserId = 1,
+            ProductId = 1,
+            Rating = 2,
+            Comment = "Initial moderated comment",
+            IsHidden = true,
+            CreatedAt = DateTime.UtcNow.AddDays(-1)
+        });
+        await context.SaveChangesAsync();
+
+        var controller = SetupReviewsController(context, userId: 1);
+        var model = new ReviewSubmissionViewModel
+        {
+            ProductId = 1,
+            Rating = 5,
+            Comment = "Edited comment trying to bypass moderation"
+        };
+
+        // Act
+        var result = await controller.Submit(model);
+
+        // Assert (B3): Comment updates, but Admin's IsHidden = true moderation flag is preserved!
+        var redirectResult = Assert.IsType<RedirectResult>(result);
+        Assert.Contains("/Catalog/Details/1#reviews", redirectResult.Url);
+
+        var updatedReview = await context.Reviews.FindAsync(77);
+        Assert.NotNull(updatedReview);
+        Assert.Equal("Edited comment trying to bypass moderation", updatedReview.Comment);
+        Assert.True(updatedReview.IsHidden);
+    }
 }

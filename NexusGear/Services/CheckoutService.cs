@@ -395,7 +395,7 @@ public class CheckoutService : ICheckoutService
             {
                 ProductId = item.ProductId,
                 ProductName = item.Product?.Name ?? "Gaming Peripheral",
-                ImageUrl = item.Product?.ImageUrl ?? "/images/products/placeholder.png",
+                ImageUrl = item.Product?.ImageUrl ?? "/images/products/placeholder.svg",
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice
             });
