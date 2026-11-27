@@ -630,4 +630,138 @@ public class OrderHistoryAndAdminTests : IDisposable
         Assert.False(result.Success);
         Assert.Contains("not found", result.Message);
     }
+
+    [Fact]
+    public async Task AdminService_UpdateOrderStatus_UnpaidToCancelled_DoesNotInflateStock()
+    {
+        // Arrange: Create an Unpaid order for 2 units of Product 1 (stock: 10)
+        using var context = new AppDbContext(_contextOptions);
+        var unpaidOrder = new Order
+        {
+            OrderId = 50,
+            OrderNumber = "NXG-2026-9050",
+            UserId = 2,
+            AddressId = 1,
+            ShippingMethod = "Standard Courier",
+            ShippingCost = 15.00m,
+            TotalAmount = 915.00m,
+            Status = "Unpaid",
+            OrderDate = DateTime.UtcNow
+        };
+        context.Orders.Add(unpaidOrder);
+        context.OrderItems.Add(new OrderItem
+        {
+            OrderItemId = 50,
+            OrderId = 50,
+            ProductId = 1,
+            Quantity = 2,
+            UnitPrice = 450.00m
+        });
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act: Cancel Unpaid order (stock was never deducted)
+        var result = await adminService.UpdateOrderStatusAsync(50, "Cancelled");
+
+        // Assert (A7): Stock must stay at 10 (no phantom restock)
+        Assert.True(result.Success);
+        var updatedOrder = await context.Orders.FindAsync(50);
+        Assert.Equal("Cancelled", updatedOrder!.Status);
+
+        var product = await context.Products.FindAsync(1);
+        Assert.Equal(10, product!.StockQuantity);
+    }
+
+    [Fact]
+    public async Task AdminService_UpdateOrderStatus_UnpaidToPaid_AtomicallyDecrementsStockAndUpdatesRowVersion()
+    {
+        // Arrange: Create an Unpaid order for 3 units of Product 1 (stock: 10)
+        using var context = new AppDbContext(_contextOptions);
+        var initialRowVersion = (await context.Products.AsNoTracking().FirstAsync(p => p.ProductId == 1)).RowVersion;
+
+        var unpaidOrder = new Order
+        {
+            OrderId = 51,
+            OrderNumber = "NXG-2026-9051",
+            UserId = 2,
+            AddressId = 1,
+            ShippingMethod = "Standard Courier",
+            ShippingCost = 15.00m,
+            TotalAmount = 1365.00m,
+            Status = "Unpaid",
+            OrderDate = DateTime.UtcNow
+        };
+        context.Orders.Add(unpaidOrder);
+        context.OrderItems.Add(new OrderItem
+        {
+            OrderItemId = 51,
+            OrderId = 51,
+            ProductId = 1,
+            Quantity = 3,
+            UnitPrice = 450.00m
+        });
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act: Admin transitions Unpaid -> Paid
+        var result = await adminService.UpdateOrderStatusAsync(51, "Paid");
+
+        // Assert (A7, A9): Stock decremented 10 -> 7 and RowVersion rotated
+        Assert.True(result.Success);
+        var updatedOrder = await context.Orders.FindAsync(51);
+        Assert.Equal("Paid", updatedOrder!.Status);
+
+        var product = await context.Products.FindAsync(1);
+        Assert.Equal(7, product!.StockQuantity);
+        Assert.NotEqual(initialRowVersion, product.RowVersion);
+    }
+
+    [Fact]
+    public async Task AdminService_UpdateOrderStatus_UnpaidToPaid_RejectsWhenInsufficientStock()
+    {
+        // Arrange: Product 2 has stock 3, order requests 5 units
+        using var context = new AppDbContext(_contextOptions);
+        var unpaidOrder = new Order
+        {
+            OrderId = 52,
+            OrderNumber = "NXG-2026-9052",
+            UserId = 2,
+            AddressId = 1,
+            ShippingMethod = "Standard Courier",
+            ShippingCost = 15.00m,
+            TotalAmount = 615.00m,
+            Status = "Unpaid",
+            OrderDate = DateTime.UtcNow
+        };
+        context.Orders.Add(unpaidOrder);
+        context.OrderItems.Add(new OrderItem
+        {
+            OrderItemId = 52,
+            OrderId = 52,
+            ProductId = 2,
+            Quantity = 5,
+            UnitPrice = 120.00m
+        });
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act
+        var result = await adminService.UpdateOrderStatusAsync(52, "Paid");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("insufficient stock", result.Message, StringComparison.OrdinalIgnoreCase);
+
+        var order = await context.Orders.FindAsync(52);
+        Assert.Equal("Unpaid", order!.Status);
+
+        var product = await context.Products.FindAsync(2);
+        Assert.Equal(3, product!.StockQuantity);
+    }
 }

@@ -42,7 +42,7 @@ public class OrderService : IOrderService
             {
                 ProductId = oi.ProductId,
                 ProductName = oi.Product?.Name ?? "Item",
-                ImageUrl = oi.Product?.ImageUrl ?? "/images/products/placeholder.webp",
+                ImageUrl = oi.Product?.ImageUrl ?? "/images/products/placeholder.svg",
                 Quantity = oi.Quantity,
                 UnitPrice = oi.UnitPrice
             }).ToList()
@@ -79,7 +79,7 @@ public class OrderService : IOrderService
         {
             ProductId = oi.ProductId,
             ProductName = oi.Product?.Name ?? "Item",
-            ImageUrl = oi.Product?.ImageUrl ?? "/images/products/placeholder.webp",
+            ImageUrl = oi.Product?.ImageUrl ?? "/images/products/placeholder.svg",
             Quantity = oi.Quantity,
             UnitPrice = oi.UnitPrice,
             CanReview = isEligibleForReview && !reviewedProductIds.Contains(oi.ProductId)

@@ -101,12 +101,19 @@
 
                     @if (Model.AllowedTransitions.Contains("Cancelled"))
                     {
-                        <form method="post" asp-action="UpdateOrderStatus" class="m-0" onsubmit="return confirm('WARNING: Cancelling this order will atomically restock all items back into product inventory. Proceed?');">
+                        var cancelConfirmMsg = Model.Status == "Unpaid"
+                            ? "Cancel this Unpaid order? No inventory has been deducted yet."
+                            : "WARNING: Cancelling this Paid order will atomically restock all items back into product inventory. Proceed?";
+                        var cancelBtnText = Model.Status == "Unpaid"
+                            ? "Cancel Order"
+                            : "Cancel &amp; Restock Inventory";
+
+                        <form method="post" asp-action="UpdateOrderStatus" class="m-0" onsubmit="return confirm('@cancelConfirmMsg');">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="orderId" value="@Model.OrderId" />
                             <input type="hidden" name="newStatus" value="Cancelled" />
                             <button type="submit" class="btn btn-sm btn-outline-danger px-3">
-                                <i class="bi bi-x-circle me-1"></i> Cancel &amp; Restock Inventory
+                                <i class="bi bi-x-circle me-1"></i> @Html.Raw(cancelBtnText)
                             </button>
                         </form>
                     }

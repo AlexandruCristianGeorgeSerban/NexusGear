@@ -13,15 +13,18 @@ public class AdminService : IAdminService
     private readonly AppDbContext _context;
     private readonly IRepositoryWrapper _repository;
     private readonly ILogger<AdminService> _logger;
+    private readonly IEmailService? _emailService;
 
     public AdminService(
         AppDbContext context,
         IRepositoryWrapper repository,
-        ILogger<AdminService> logger)
+        ILogger<AdminService> logger,
+        IEmailService? emailService = null)
     {
         _context = context;
         _repository = repository;
         _logger = logger;
+        _emailService = emailService;
     }
 
     public async Task<AdminDashboardViewModel> GetDashboardMetricsAsync(string interval = "30days")
@@ -262,7 +265,7 @@ public class AdminService : IAdminService
         {
             ProductId = oi.ProductId,
             ProductName = oi.Product?.Name ?? "Item",
-            ImageUrl = oi.Product?.ImageUrl ?? "/images/products/placeholder.webp",
+            ImageUrl = oi.Product?.ImageUrl ?? "/images/products/placeholder.svg",
             Quantity = oi.Quantity,
             UnitPrice = oi.UnitPrice,
             CanReview = false
@@ -318,6 +321,9 @@ public class AdminService : IAdminService
             var order = await _context.Orders
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
+                .Include(o => o.User)
+                .Include(o => o.Address)
+                .Include(o => o.DiscountCode)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
             if (order == null)
@@ -348,9 +354,37 @@ public class AdminService : IAdminService
 
             var previousStatus = order.Status;
 
-            // Restock on cancel (A7 requirement)
-            // If the order transitions from a non-Cancelled status to Cancelled, return inventory!
-            if (newStatus == "Cancelled" && previousStatus != "Cancelled")
+            // Atomic inventory deduction when Admin manually transitions Unpaid -> Paid (A7)
+            if (newStatus == "Paid" && previousStatus == "Unpaid")
+            {
+                foreach (var item in order.OrderItems)
+                {
+                    if (item.Product == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return (false, $"Cannot mark Order #{order.OrderNumber} as Paid: Product ID {item.ProductId} no longer exists.");
+                    }
+
+                    if (item.Product.StockQuantity < item.Quantity)
+                    {
+                        await transaction.RollbackAsync();
+                        return (false, $"Cannot mark Order #{order.OrderNumber} as Paid: insufficient stock for '{item.Product.Name}' (available: {item.Product.StockQuantity}, requested: {item.Quantity}).");
+                    }
+
+                    item.Product.StockQuantity -= item.Quantity;
+                    item.Product.RowVersion = Guid.NewGuid();
+                }
+
+                if (order.DiscountCode != null)
+                {
+                    order.DiscountCode.UsedCount++;
+                }
+
+                _logger.LogInformation("Admin manually settled Unpaid Order {OrderNumber} as Paid with atomic inventory deduction.", order.OrderNumber);
+            }
+
+            // Restock on cancel (A7 requirement): only restock if stock was previously deducted (Paid / Shipped)!
+            if (newStatus == "Cancelled" && previousStatus is "Paid" or "Shipped")
             {
                 foreach (var item in order.OrderItems)
                 {
@@ -360,15 +394,39 @@ public class AdminService : IAdminService
                         item.Product.RowVersion = Guid.NewGuid();
                     }
                 }
-                _logger.LogInformation("Restocked inventory for cancelled order {OrderNumber}", order.OrderNumber);
+                _logger.LogInformation("Restocked inventory for cancelled {PrevStatus} order {OrderNumber}", previousStatus, order.OrderNumber);
             }
 
             order.Status = newStatus;
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            if (newStatus == "Paid" && previousStatus == "Unpaid" && _emailService != null)
+            {
+                try
+                {
+                    await _emailService.SendOrderConfirmationEmailAsync(order);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Order confirmation email dispatch failed after manual payment settlement for {OrderNumber}", order.OrderNumber);
+                }
+            }
+
             _logger.LogInformation("Order {OrderNumber} status transitioned from {Prev} to {Next}", order.OrderNumber, previousStatus, newStatus);
-            return (true, $"Order #{order.OrderNumber} transitioned to '{newStatus}' successfully.");
+            string successMsg = (newStatus == "Cancelled" && previousStatus is "Paid" or "Shipped")
+                ? $"Order #{order.OrderNumber} cancelled and inventory restocked."
+                : (newStatus == "Paid" && previousStatus == "Unpaid")
+                    ? $"Order #{order.OrderNumber} marked as Paid and stock deducted atomically."
+                    : $"Order #{order.OrderNumber} transitioned to '{newStatus}' successfully.";
+
+            return (true, successMsg);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Concurrency conflict updating order status for Order ID {OrderId}", orderId);
+            return (false, "A stock concurrency conflict occurred while updating the order. Please retry.");
         }
         catch (Exception ex)
         {
@@ -472,7 +530,7 @@ public class AdminService : IAdminService
     {
         try
         {
-            string imageUrl = "/images/products/placeholder.webp";
+            string imageUrl = "/images/products/placeholder.svg";
 
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
@@ -809,7 +867,7 @@ public class AdminService : IAdminService
                 ReviewId = r.ReviewId,
                 ProductId = r.ProductId,
                 ProductName = r.Product != null ? r.Product.Name : "Hardware Item",
-                ProductImageUrl = r.Product != null ? r.Product.ImageUrl : "/images/products/placeholder.webp",
+                ProductImageUrl = r.Product != null ? r.Product.ImageUrl : "/images/products/placeholder.svg",
                 CustomerName = r.User != null ? r.User.FullName : "Customer",
                 CustomerEmail = r.User != null ? r.User.Email : "",
                 Rating = r.Rating,

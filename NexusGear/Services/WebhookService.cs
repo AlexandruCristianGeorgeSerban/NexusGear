@@ -43,8 +43,18 @@ public class WebhookService : IWebhookService
 
         Event? stripeEvent = null;
 
-        if (!isPlaceholder && !string.IsNullOrWhiteSpace(stripeSignatureHeader))
+        if (!isPlaceholder)
         {
+            if (string.IsNullOrWhiteSpace(stripeSignatureHeader))
+            {
+                _logger.LogWarning("Rejected Stripe webhook payload because the Stripe-Signature header is missing.");
+                return new WebhookProcessingResult
+                {
+                    Success = false,
+                    Message = "Missing Stripe-Signature header."
+                };
+            }
+
             try
             {
                 stripeEvent = EventUtility.ConstructEvent(jsonPayload, stripeSignatureHeader, webhookSecret);
@@ -139,11 +149,11 @@ public class WebhookService : IWebhookService
                 };
             }
 
-            // 2. Idempotency Check: if order is already Paid, do not decrement stock again!
-            if (order.Status == "Paid")
+            // 2. Idempotency & State Guard: if already Paid/Shipped/Delivered, ignore duplicate; if Cancelled, reject!
+            if (order.Status is "Paid" or "Shipped" or "Delivered")
             {
                 await transaction.RollbackAsync();
-                _logger.LogInformation("Webhook idempotency: Order {OrderNumber} already marked as Paid. Duplicate event ignored.", order.OrderNumber);
+                _logger.LogInformation("Webhook idempotency: Order {OrderNumber} is already in status '{Status}'. Duplicate event ignored.", order.OrderNumber, order.Status);
 
                 return new WebhookProcessingResult
                 {
@@ -151,7 +161,21 @@ public class WebhookService : IWebhookService
                     IsIdempotentDuplicate = true,
                     OrderId = order.OrderId,
                     OrderNumber = order.OrderNumber,
-                    Message = $"Order {order.OrderNumber} is already confirmed as Paid."
+                    Message = $"Order {order.OrderNumber} is already settled ({order.Status})."
+                };
+            }
+
+            if (order.Status == "Cancelled")
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning("Rejected payment confirmation webhook for cancelled Order {OrderNumber}.", order.OrderNumber);
+
+                return new WebhookProcessingResult
+                {
+                    Success = false,
+                    OrderId = order.OrderId,
+                    OrderNumber = order.OrderNumber,
+                    Message = $"Order {order.OrderNumber} was already cancelled and cannot be marked as Paid."
                 };
             }
 

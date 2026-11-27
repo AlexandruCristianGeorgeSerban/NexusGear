@@ -527,4 +527,89 @@ public class StripeAndInventoryTests : IDisposable
         Assert.Contains("declined", errorMessage, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Unpaid", errorMessage);
     }
+
+    [Fact]
+    public async Task ProcessOrderPaymentSuccess_CancelledOrder_RejectsPaymentAndPreservesStock()
+    {
+        // Arrange: Mark Order 1 as Cancelled before webhook arrives
+        using var context = new AppDbContext(_contextOptions);
+        var order = await context.Orders.FindAsync(1);
+        order!.Status = "Cancelled";
+        await context.SaveChangesAsync();
+
+        var configMock = new Mock<IConfiguration>();
+        var emailMock = new Mock<IEmailService>();
+        var webhookService = new WebhookService(
+            context,
+            configMock.Object,
+            emailMock.Object,
+            NullLogger<WebhookService>.Instance);
+
+        // Act
+        var result = await webhookService.ProcessOrderPaymentSuccessAsync(1);
+
+        // Assert: Delayed webhook must NOT mark cancelled order Paid or deduct stock
+        Assert.False(result.Success);
+        Assert.Contains("cancelled", result.Message, StringComparison.OrdinalIgnoreCase);
+
+        var updatedOrder = await context.Orders.FindAsync(1);
+        Assert.Equal("Cancelled", updatedOrder!.Status);
+
+        var product = await context.Products.FindAsync(1);
+        Assert.Equal(10, product!.StockQuantity);
+    }
+
+    [Fact]
+    public async Task ProcessOrderPaymentSuccess_ShippedOrder_IsIdempotentAndPreservesStatus()
+    {
+        // Arrange: Mark Order 1 as already Shipped
+        using var context = new AppDbContext(_contextOptions);
+        var order = await context.Orders.FindAsync(1);
+        order!.Status = "Shipped";
+        await context.SaveChangesAsync();
+
+        var configMock = new Mock<IConfiguration>();
+        var emailMock = new Mock<IEmailService>();
+        var webhookService = new WebhookService(
+            context,
+            configMock.Object,
+            emailMock.Object,
+            NullLogger<WebhookService>.Instance);
+
+        // Act: Duplicate webhook delivery
+        var result = await webhookService.ProcessOrderPaymentSuccessAsync(1);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.True(result.IsIdempotentDuplicate);
+
+        var updatedOrder = await context.Orders.FindAsync(1);
+        Assert.Equal("Shipped", updatedOrder!.Status);
+
+        var product = await context.Products.FindAsync(1);
+        Assert.Equal(10, product!.StockQuantity);
+    }
+
+    [Fact]
+    public async Task ProcessWebhook_RealSecretWithoutSignatureHeader_IsRejected()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var configMock = new Mock<IConfiguration>();
+        configMock.Setup(c => c["Stripe:WebhookSecret"]).Returns("whsec_real_live_test_secret_12345");
+        var emailMock = new Mock<IEmailService>();
+
+        var webhookService = new WebhookService(
+            context,
+            configMock.Object,
+            emailMock.Object,
+            NullLogger<WebhookService>.Instance);
+
+        // Act: Attempt bypass by omitting Stripe-Signature header
+        var result = await webhookService.ProcessWebhookAsync("{\"type\":\"checkout.session.completed\"}", null);
+
+        // Assert (A6/A10 security)
+        Assert.False(result.Success);
+        Assert.Contains("Stripe-Signature", result.Message);
+    }
 }

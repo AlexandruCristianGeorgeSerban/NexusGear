@@ -113,7 +113,18 @@
                         </div>
                         <div class="d-flex justify-content-between text-muted small mb-1">
                             <span>Payment Stage:</span>
-                            <span class="badge bg-secondary text-white">Awaiting Stripe Test Session</span>
+                            @if (Model.Status is "Paid" or "Shipped" or "Delivered")
+                            {
+                                <span class="badge bg-success text-white">Settled via Webhook</span>
+                            }
+                            else if (Model.Status == "Cancelled")
+                            {
+                                <span class="badge bg-danger text-white">Cancelled</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary text-white">Awaiting Stripe Test Session</span>
+                            }
                         </div>
                         @if (!string.IsNullOrEmpty(Model.DiscountCode))
                         {

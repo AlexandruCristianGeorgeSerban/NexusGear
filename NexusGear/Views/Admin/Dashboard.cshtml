@@ -35,7 +35,7 @@
                 </a>
             </div>
 
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
                 <a asp-action="Orders" class="btn btn-outline-light btn-sm fw-bold d-inline-flex align-items-center" style="height: 31px;">
                     <i class="bi bi-box-seam me-1"></i> Orders
                 </a>
@@ -158,7 +158,7 @@
                             <div class="p-2 rounded-2 bg-dark border border-secondary border-opacity-50 d-flex align-items-center gap-3">
                                 <span class="@rankColor fw-bold" style="min-width: 28px; text-align: center;">#@(i + 1)</span>
                                 
-                                <img src="@prod.ImageUrl" alt="@prod.Name" class="rounded object-fit-cover bg-black border border-secondary border-opacity-25" style="width: 44px; height: 44px;" onerror="this.src='/images/products/placeholder.png';" />
+                                <img src="@prod.ImageUrl" alt="@prod.Name" class="rounded object-fit-cover bg-black border border-secondary border-opacity-25" style="width: 44px; height: 44px;" onerror="this.src='/images/products/placeholder.svg';" />
                                 
                                 <div class="flex-grow-1 text-truncate">
                                     <div class="text-white small fw-bold text-truncate" title="@prod.Name">@prod.Name</div>

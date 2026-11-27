@@ -91,6 +91,14 @@ public class EmailService : IEmailService
 
     private static string GenerateHtmlReceipt(Order order)
     {
+        var customerName = WebUtility.HtmlEncode(order.User?.FullName ?? "Valued Customer");
+        var orderNumber = WebUtility.HtmlEncode(order.OrderNumber);
+        var street = WebUtility.HtmlEncode(order.Address?.Street ?? string.Empty);
+        var city = WebUtility.HtmlEncode(order.Address?.City ?? string.Empty);
+        var county = WebUtility.HtmlEncode(order.Address?.County ?? string.Empty);
+        var postalCode = WebUtility.HtmlEncode(order.Address?.PostalCode ?? string.Empty);
+        var shippingMethod = WebUtility.HtmlEncode(order.ShippingMethod);
+
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html><html><head><meta charset='utf-8'>");
         sb.AppendLine("<style>");
@@ -109,13 +117,13 @@ public class EmailService : IEmailService
         sb.AppendLine("<div class='card' style='max-width: 600px; margin: 0 auto; background-color: #131D31; border: 1px solid #1E293B; border-radius: 12px; padding: 28px;'>");
         sb.AppendLine("<div class='header' style='text-align: center; border-bottom: 1px solid #1E293B; padding-bottom: 20px; margin-bottom: 20px;'>");
         sb.AppendLine("<h1 class='title' style='font-size: 24px; font-weight: bold; color: #FFFFFF; margin: 0 0 8px 0;'>⚡ NexusGear — Order Confirmed</h1>");
-        sb.AppendLine($"<p style='color: #94A3B8; margin: 0 0 14px 0; font-size: 15px;'>Thank you for your purchase, <strong style='color: #FFFFFF;'>{order.User?.FullName}</strong>!</p>");
-        sb.AppendLine($"<div class='order-tag' style='font-family: monospace; font-size: 16px; color: #00E5A3; background-color: #0B1120; padding: 6px 14px; border-radius: 6px; display: inline-block; font-weight: bold; border: 1px solid #1E293B;'>{order.OrderNumber}</div>");
+        sb.AppendLine($"<p style='color: #94A3B8; margin: 0 0 14px 0; font-size: 15px;'>Thank you for your purchase, <strong style='color: #FFFFFF;'>{customerName}</strong>!</p>");
+        sb.AppendLine($"<div class='order-tag' style='font-family: monospace; font-size: 16px; color: #00E5A3; background-color: #0B1120; padding: 6px 14px; border-radius: 6px; display: inline-block; font-weight: bold; border: 1px solid #1E293B;'>{orderNumber}</div>");
         sb.AppendLine("</div>");
 
         sb.AppendLine("<div style='margin-bottom: 20px; background-color: #0B1120; border: 1px solid #1E293B; border-radius: 8px; padding: 14px 18px;'>");
         sb.AppendLine("<p style='margin: 0 0 6px 0; color: #00E5A3; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;'>SHIPPING DESTINATION</p>");
-        sb.AppendLine($"<p style='margin: 0; font-size: 14px; color: #FFFFFF; line-height: 1.5;'><strong style='color: #FFFFFF;'>{order.Address?.Street}</strong>, {order.Address?.City}, jud. {order.Address?.County} ({order.Address?.PostalCode})<br><span style='color: #94A3B8;'>Courier Service:</span> <span style='color: #00E5A3; font-weight: 500;'>{order.ShippingMethod}</span></p>");
+        sb.AppendLine($"<p style='margin: 0; font-size: 14px; color: #FFFFFF; line-height: 1.5;'><strong style='color: #FFFFFF;'>{street}</strong>, {city}, jud. {county} ({postalCode})<br><span style='color: #94A3B8;'>Courier Service:</span> <span style='color: #00E5A3; font-weight: 500;'>{shippingMethod}</span></p>");
         sb.AppendLine("</div>");
 
         sb.AppendLine("<table style='width: 100%; border-collapse: collapse; margin-top: 16px; color: #FFFFFF;'>");
@@ -124,7 +132,8 @@ public class EmailService : IEmailService
         foreach (var item in order.OrderItems)
         {
             var lineTotal = item.Quantity * item.UnitPrice;
-            sb.AppendLine($"<tr><td style='padding: 14px 0; border-bottom: 1px solid #1E293B; font-size: 14px;'><strong style='color: #FFFFFF !important; font-size: 14px;'>{item.Product?.Name}</strong></td><td style='text-align:center; padding: 14px 0; border-bottom: 1px solid #1E293B; font-size: 14px;'><span style='color: #E2E8F0 !important;'>{item.Quantity}</span></td><td style='text-align:right; padding: 14px 0; border-bottom: 1px solid #1E293B; font-size: 14px;'><strong style='color: #FFFFFF !important;'>{lineTotal:N2} RON</strong></td></tr>");
+            var productName = WebUtility.HtmlEncode(item.Product?.Name ?? "Hardware Item");
+            sb.AppendLine($"<tr><td style='padding: 14px 0; border-bottom: 1px solid #1E293B; font-size: 14px;'><strong style='color: #FFFFFF !important; font-size: 14px;'>{productName}</strong></td><td style='text-align:center; padding: 14px 0; border-bottom: 1px solid #1E293B; font-size: 14px;'><span style='color: #E2E8F0 !important;'>{item.Quantity}</span></td><td style='text-align:right; padding: 14px 0; border-bottom: 1px solid #1E293B; font-size: 14px;'><strong style='color: #FFFFFF !important;'>{lineTotal:N2} RON</strong></td></tr>");
         }
         sb.AppendLine("</tbody>");
         sb.AppendLine("<tfoot>");
