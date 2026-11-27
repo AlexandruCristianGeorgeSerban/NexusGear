@@ -764,4 +764,211 @@ public class OrderHistoryAndAdminTests : IDisposable
         var product = await context.Products.FindAsync(2);
         Assert.Equal(3, product!.StockQuantity);
     }
+
+    // =========================================================================
+    // B5: Admin Discount Codes CRUD Tests
+    // =========================================================================
+
+    [Fact]
+    public async Task AdminService_CreateDiscount_NormalizesCodeAndPersists()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        var form = new AdminDiscountFormViewModel
+        {
+            Code = "winter25",
+            DiscountType = "Percentage",
+            DiscountValue = 25.00m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(2).Date,
+            MaxUses = 50
+        };
+
+        // Act
+        var result = await adminService.CreateDiscountAsync(form);
+
+        // Assert
+        Assert.True(result.Success);
+        var saved = await context.DiscountCodes.FirstOrDefaultAsync(d => d.Code == "WINTER25");
+        Assert.NotNull(saved);
+        Assert.Equal("Percentage", saved.DiscountType);
+        Assert.Equal(25.00m, saved.DiscountValue);
+        Assert.Equal(50, saved.MaxUses);
+        Assert.Equal(0, saved.UsedCount);
+    }
+
+    [Fact]
+    public async Task AdminService_CreateDiscount_RejectsDuplicateCodeAndInvalidPercentage()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        context.DiscountCodes.Add(new DiscountCode
+        {
+            Code = "NEXUS10",
+            DiscountType = "Percentage",
+            DiscountValue = 10m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(1),
+            MaxUses = 100
+        });
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act 1: Duplicate code (case-insensitive)
+        var dupResult = await adminService.CreateDiscountAsync(new AdminDiscountFormViewModel
+        {
+            Code = "nexus10",
+            DiscountType = "Percentage",
+            DiscountValue = 15m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(1),
+            MaxUses = 10
+        });
+        Assert.False(dupResult.Success);
+        Assert.Contains("already exists", dupResult.Message);
+
+        // Act 2: Percentage > 100
+        var invalidPct = await adminService.CreateDiscountAsync(new AdminDiscountFormViewModel
+        {
+            Code = "OVER100",
+            DiscountType = "Percentage",
+            DiscountValue = 150m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(1),
+            MaxUses = 10
+        });
+        Assert.False(invalidPct.Success);
+        Assert.Contains("100%", invalidPct.Message);
+    }
+
+    [Fact]
+    public async Task AdminService_GetAdminDiscounts_FiltersActiveAndExpired()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        context.DiscountCodes.AddRange(
+            new DiscountCode
+            {
+                Code = "ACTIVE20",
+                DiscountType = "FixedAmount",
+                DiscountValue = 20m,
+                ExpiryDate = DateTime.UtcNow.AddDays(10),
+                MaxUses = 20,
+                UsedCount = 0
+            },
+            new DiscountCode
+            {
+                Code = "OLD10",
+                DiscountType = "Percentage",
+                DiscountValue = 10m,
+                ExpiryDate = DateTime.UtcNow.AddDays(-5),
+                MaxUses = 20,
+                UsedCount = 0
+            });
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act
+        var activeOnly = await adminService.GetAdminDiscountsAsync(filter: "Active");
+        var expiredOnly = await adminService.GetAdminDiscountsAsync(filter: "Expired");
+
+        // Assert
+        Assert.Single(activeOnly.Discounts);
+        Assert.Equal("ACTIVE20", activeOnly.Discounts[0].Code);
+        Assert.Single(expiredOnly.Discounts);
+        Assert.Equal("OLD10", expiredOnly.Discounts[0].Code);
+    }
+
+    [Fact]
+    public async Task AdminService_EditAndExpireDiscount_UpdatesFieldsAndExpiresImmediately()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var entity = new DiscountCode
+        {
+            Code = "FLASH15",
+            DiscountType = "Percentage",
+            DiscountValue = 15m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(1),
+            MaxUses = 30,
+            UsedCount = 3
+        };
+        context.DiscountCodes.Add(entity);
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act 1: Edit
+        var editResult = await adminService.EditDiscountAsync(new AdminDiscountFormViewModel
+        {
+            DiscountCodeId = entity.DiscountCodeId,
+            Code = "flash50ron",
+            DiscountType = "FixedAmount",
+            DiscountValue = 50m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(2).Date,
+            MaxUses = 40
+        });
+        Assert.True(editResult.Success);
+
+        var updated = await context.DiscountCodes.FindAsync(entity.DiscountCodeId);
+        Assert.Equal("FLASH50RON", updated!.Code);
+        Assert.Equal("FixedAmount", updated.DiscountType);
+        Assert.Equal(50m, updated.DiscountValue);
+        Assert.Equal(3, updated.UsedCount); // Preserved
+
+        // Act 2: Expire immediately
+        var expireResult = await adminService.ExpireDiscountAsync(entity.DiscountCodeId);
+        Assert.True(expireResult.Success);
+
+        var expired = await context.DiscountCodes.FindAsync(entity.DiscountCodeId);
+        Assert.True(expired!.ExpiryDate <= DateTime.UtcNow);
+    }
+
+    [Fact]
+    public async Task AdminService_DeleteDiscount_BlockedWhenReferencedInOrders_SucceedsWhenUnused()
+    {
+        // Arrange
+        using var context = new AppDbContext(_contextOptions);
+        var usedVoucher = new DiscountCode
+        {
+            Code = "USED50",
+            DiscountType = "FixedAmount",
+            DiscountValue = 50m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(1),
+            MaxUses = 10,
+            UsedCount = 1
+        };
+        var unusedVoucher = new DiscountCode
+        {
+            Code = "UNUSED10",
+            DiscountType = "Percentage",
+            DiscountValue = 10m,
+            ExpiryDate = DateTime.UtcNow.AddMonths(1),
+            MaxUses = 10,
+            UsedCount = 0
+        };
+        context.DiscountCodes.AddRange(usedVoucher, unusedVoucher);
+        await context.SaveChangesAsync();
+
+        var order1 = await context.Orders.FindAsync(1);
+        order1!.DiscountCodeId = usedVoucher.DiscountCodeId;
+        await context.SaveChangesAsync();
+
+        var repo = new RepositoryWrapper(context);
+        var adminService = new AdminService(context, repo, NullLogger<AdminService>.Instance);
+
+        // Act & Assert 1: Blocked when referenced by order
+        var blocked = await adminService.DeleteDiscountAsync(usedVoucher.DiscountCodeId);
+        Assert.False(blocked.Success);
+        Assert.Contains("referenced by", blocked.Message);
+
+        // Act & Assert 2: Deleted when unused
+        var deleted = await adminService.DeleteDiscountAsync(unusedVoucher.DiscountCodeId);
+        Assert.True(deleted.Success);
+        Assert.Null(await context.DiscountCodes.FindAsync(unusedVoucher.DiscountCodeId));
+    }
 }

@@ -336,4 +336,117 @@ public class AdminController : Controller
 
         return RedirectToAction(nameof(Reviews), new { filter, search });
     }
+
+    // ==========================================
+    // Discount Codes Management (B5 Admin CRUD)
+    // ==========================================
+
+    [HttpGet]
+    public async Task<IActionResult> Discounts(string? filter = "All", string? search = null)
+    {
+        var model = await _adminService.GetAdminDiscountsAsync(filter, search);
+        return View(model);
+    }
+
+    [HttpGet]
+    public IActionResult CreateDiscount()
+    {
+        return View("DiscountForm", new AdminDiscountFormViewModel
+        {
+            ExpiryDate = DateTime.UtcNow.AddMonths(3).Date
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateDiscount(AdminDiscountFormViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("DiscountForm", model);
+        }
+
+        var result = await _adminService.CreateDiscountAsync(model);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+            return RedirectToAction(nameof(Discounts));
+        }
+
+        TempData["ErrorMessage"] = result.Message;
+        return View("DiscountForm", model);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> EditDiscount(int id)
+    {
+        var model = await _adminService.PrepareEditDiscountFormAsync(id);
+        if (model == null)
+        {
+            TempData["ErrorMessage"] = $"Promo code #{id} not found.";
+            return RedirectToAction(nameof(Discounts));
+        }
+
+        return View("DiscountForm", model);
+    }
+
+    [HttpPost]
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditDiscount(AdminDiscountFormViewModel model, int? id = null)
+    {
+        if (!model.DiscountCodeId.HasValue && id.HasValue)
+        {
+            model.DiscountCodeId = id.Value;
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View("DiscountForm", model);
+        }
+
+        var result = await _adminService.EditDiscountAsync(model);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+            return RedirectToAction(nameof(Discounts));
+        }
+
+        TempData["ErrorMessage"] = result.Message;
+        return View("DiscountForm", model);
+    }
+
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ExpireDiscount(int id, string? filter = null, string? search = null)
+    {
+        var result = await _adminService.ExpireDiscountAsync(id);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+        }
+        else
+        {
+            TempData["ErrorMessage"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Discounts), new { filter, search });
+    }
+
+    [HttpPost("{id}")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteDiscount(int id)
+    {
+        var result = await _adminService.DeleteDiscountAsync(id);
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = result.Message;
+        }
+        else
+        {
+            TempData["ErrorMessage"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Discounts));
+    }
 }

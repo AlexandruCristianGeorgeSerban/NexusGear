@@ -24,4 +24,11 @@ public interface IAdminService
 
     Task<AdminReviewListViewModel> GetAdminReviewsAsync(string? filter = "All", string? search = null);
     Task<(bool Success, string Message, bool IsHidden)> ToggleReviewVisibilityAsync(int reviewId);
+
+    Task<AdminDiscountListViewModel> GetAdminDiscountsAsync(string? filter = "All", string? search = null);
+    Task<AdminDiscountFormViewModel?> PrepareEditDiscountFormAsync(int discountCodeId);
+    Task<(bool Success, string Message)> CreateDiscountAsync(AdminDiscountFormViewModel model);
+    Task<(bool Success, string Message)> EditDiscountAsync(AdminDiscountFormViewModel model);
+    Task<(bool Success, string Message)> ExpireDiscountAsync(int discountCodeId);
+    Task<(bool Success, string Message)> DeleteDiscountAsync(int discountCodeId);
 }

@@ -908,4 +908,248 @@ public class AdminService : IAdminService
             return (false, $"Error updating review visibility: {ex.Message}", false);
         }
     }
+
+    // ==========================================
+    // Discount Codes Management (B5 Admin CRUD)
+    // ==========================================
+
+    public async Task<AdminDiscountListViewModel> GetAdminDiscountsAsync(string? filter = "All", string? search = null)
+    {
+        var allCodes = await _context.DiscountCodes
+            .Include(d => d.Orders)
+            .AsNoTracking()
+            .OrderByDescending(d => d.DiscountCodeId)
+            .Select(d => new AdminDiscountRowViewModel
+            {
+                DiscountCodeId = d.DiscountCodeId,
+                Code = d.Code,
+                DiscountType = d.DiscountType,
+                DiscountValue = d.DiscountValue,
+                ExpiryDate = d.ExpiryDate,
+                MaxUses = d.MaxUses,
+                UsedCount = d.UsedCount,
+                OrdersCount = d.Orders.Count
+            })
+            .ToListAsync();
+
+        var totalCount = allCodes.Count;
+        var activeCount = allCodes.Count(d => d.IsActive);
+        var expiredCount = allCodes.Count(d => d.IsExpired);
+
+        var normalizedFilter = (filter ?? "All").Trim();
+        IEnumerable<AdminDiscountRowViewModel> filtered = normalizedFilter.ToLowerInvariant() switch
+        {
+            "active" => allCodes.Where(d => d.IsActive),
+            "expired" => allCodes.Where(d => d.IsExpired),
+            "exhausted" => allCodes.Where(d => !d.IsExpired && d.IsExhausted),
+            _ => allCodes
+        };
+
+        if (normalizedFilter.ToLowerInvariant() is not ("active" or "expired" or "exhausted"))
+        {
+            normalizedFilter = "All";
+        }
+        else
+        {
+            normalizedFilter = char.ToUpperInvariant(normalizedFilter[0]) + normalizedFilter[1..].ToLowerInvariant();
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToUpperInvariant();
+            filtered = filtered.Where(d => d.Code.ToUpperInvariant().Contains(term));
+        }
+
+        return new AdminDiscountListViewModel
+        {
+            Discounts = filtered.ToList(),
+            Filter = normalizedFilter,
+            SearchTerm = search,
+            TotalDiscountsCount = totalCount,
+            ActiveDiscountsCount = activeCount,
+            ExpiredDiscountsCount = expiredCount
+        };
+    }
+
+    public async Task<AdminDiscountFormViewModel?> PrepareEditDiscountFormAsync(int discountCodeId)
+    {
+        var discount = await _context.DiscountCodes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.DiscountCodeId == discountCodeId);
+
+        if (discount == null) return null;
+
+        return new AdminDiscountFormViewModel
+        {
+            DiscountCodeId = discount.DiscountCodeId,
+            Code = discount.Code,
+            DiscountType = discount.DiscountType,
+            DiscountValue = discount.DiscountValue,
+            ExpiryDate = discount.ExpiryDate.Date,
+            MaxUses = discount.MaxUses,
+            UsedCount = discount.UsedCount
+        };
+    }
+
+    public async Task<(bool Success, string Message)> CreateDiscountAsync(AdminDiscountFormViewModel model)
+    {
+        try
+        {
+            var normalizedCode = model.Code.Trim().ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(normalizedCode))
+            {
+                return (false, "Promo code cannot be empty.");
+            }
+
+            if (model.DiscountType != "Percentage" && model.DiscountType != "FixedAmount")
+            {
+                return (false, "Invalid discount type.");
+            }
+
+            if (model.DiscountType == "Percentage" && (model.DiscountValue <= 0 || model.DiscountValue > 100))
+            {
+                return (false, "Percentage discount must be between 0.01% and 100%.");
+            }
+
+            var codeExists = await _context.DiscountCodes.AnyAsync(d => d.Code.ToUpper() == normalizedCode);
+            if (codeExists)
+            {
+                return (false, $"Promo code '{normalizedCode}' already exists.");
+            }
+
+            var expiry = model.ExpiryDate.TimeOfDay == TimeSpan.Zero
+                ? DateTime.SpecifyKind(model.ExpiryDate.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Utc)
+                : DateTime.SpecifyKind(model.ExpiryDate, DateTimeKind.Utc);
+
+            var entity = new DiscountCode
+            {
+                Code = normalizedCode,
+                DiscountType = model.DiscountType,
+                DiscountValue = model.DiscountValue,
+                ExpiryDate = expiry,
+                MaxUses = model.MaxUses,
+                UsedCount = 0
+            };
+
+            _context.DiscountCodes.Add(entity);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Admin created promo code '{Code}' ({Type} {Value})", entity.Code, entity.DiscountType, entity.DiscountValue);
+            return (true, $"Promo code '{entity.Code}' created successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create promo code");
+            return (false, $"Failed to create promo code: {ex.Message}");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> EditDiscountAsync(AdminDiscountFormViewModel model)
+    {
+        if (!model.DiscountCodeId.HasValue)
+        {
+            return (false, "Promo code ID is missing.");
+        }
+
+        try
+        {
+            var entity = await _context.DiscountCodes.FindAsync(model.DiscountCodeId.Value);
+            if (entity == null)
+            {
+                return (false, "Promo code not found.");
+            }
+
+            var normalizedCode = model.Code.Trim().ToUpperInvariant();
+            if (model.DiscountType != "Percentage" && model.DiscountType != "FixedAmount")
+            {
+                return (false, "Invalid discount type.");
+            }
+
+            if (model.DiscountType == "Percentage" && (model.DiscountValue <= 0 || model.DiscountValue > 100))
+            {
+                return (false, "Percentage discount must be between 0.01% and 100%.");
+            }
+
+            var duplicateExists = await _context.DiscountCodes
+                .AnyAsync(d => d.Code.ToUpper() == normalizedCode && d.DiscountCodeId != model.DiscountCodeId.Value);
+
+            if (duplicateExists)
+            {
+                return (false, $"Another promo code '{normalizedCode}' already exists.");
+            }
+
+            var expiry = model.ExpiryDate.TimeOfDay == TimeSpan.Zero
+                ? DateTime.SpecifyKind(model.ExpiryDate.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Utc)
+                : DateTime.SpecifyKind(model.ExpiryDate, DateTimeKind.Utc);
+
+            entity.Code = normalizedCode;
+            entity.DiscountType = model.DiscountType;
+            entity.DiscountValue = model.DiscountValue;
+            entity.ExpiryDate = expiry;
+            entity.MaxUses = model.MaxUses;
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Admin updated promo code '{Code}' (ID: {Id})", entity.Code, entity.DiscountCodeId);
+            return (true, $"Promo code '{entity.Code}' updated successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update promo code {Id}", model.DiscountCodeId);
+            return (false, $"Failed to update promo code: {ex.Message}");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> ExpireDiscountAsync(int discountCodeId)
+    {
+        try
+        {
+            var entity = await _context.DiscountCodes.FindAsync(discountCodeId);
+            if (entity == null)
+            {
+                return (false, $"Promo code #{discountCodeId} not found.");
+            }
+
+            entity.ExpiryDate = DateTime.UtcNow.AddMinutes(-1);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Admin expired promo code '{Code}' (ID: {Id})", entity.Code, discountCodeId);
+            return (true, $"Promo code '{entity.Code}' has been expired immediately.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to expire promo code {Id}", discountCodeId);
+            return (false, $"Failed to expire promo code: {ex.Message}");
+        }
+    }
+
+    public async Task<(bool Success, string Message)> DeleteDiscountAsync(int discountCodeId)
+    {
+        try
+        {
+            var entity = await _context.DiscountCodes
+                .Include(d => d.Orders)
+                .FirstOrDefaultAsync(d => d.DiscountCodeId == discountCodeId);
+
+            if (entity == null)
+            {
+                return (false, "Promo code not found.");
+            }
+
+            if (entity.Orders.Any())
+            {
+                return (false, $"Cannot delete promo code '{entity.Code}' because it is referenced by {entity.Orders.Count} order(s). Expire it instead to disable further use.");
+            }
+
+            _context.DiscountCodes.Remove(entity);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Admin deleted unused promo code '{Code}' (ID: {Id})", entity.Code, discountCodeId);
+            return (true, $"Promo code '{entity.Code}' deleted successfully.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete promo code {Id}", discountCodeId);
+            return (false, $"Failed to delete promo code: {ex.Message}");
+        }
+    }
 }
