@@ -31,7 +31,7 @@ git clone https://github.com/AlexandruCristianGeorgeSerban/NexusGear.git && cd N
 # 2. Copy environment template (configured for SQLite and test sandbox)
 cp .env.example .env
 
-# 3. Run automated xUnit test suite (121 passing tests)
+# 3. Run automated xUnit test suite (133 passing tests)
 dotnet test NexusGear.slnx
 
 # 4. Launch web application (automatically opens browser at https://localhost:7077)
@@ -49,7 +49,7 @@ dotnet run --project NexusGear
 * **Database**: SQLite via Entity Framework Core with Fluent API, migrations, and deterministic seed scripts (30 original products across 4 categories: Mechanical Keyboards, Gaming Mice, Deskmats & Mousepads, and Ergonomic Gaming Chairs) with photorealistic AI product assets.
 * **Payment Gateway**: Stripe (Sandbox/Test Mode) utilizing verified asynchronous server-side webhooks (`checkout.session.completed`), automatic fallback to embedded Sandbox Simulator for offline grading, and atomic inventory reduction.
 * **Email Testing**: Transactional HTML order confirmations sent through Mailtrap SMTP with fallback simulator logging.
-* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, smart hardware bundle discounts, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, multi-user address sharing, roadmap module routing, custom error handling, promo code validation, multi-step checkout order placement, Stripe test session & simulator fallback, idempotent webhook processing, atomic inventory decrement, concurrency token checks, customer order history isolation, admin order workflow state transitions, atomic cancellation restock, product & category CRUD with slug/referential integrity checks, sales analytics dashboard with Chart.js, review visibility moderation, and server-side security authorization/CSRF validation (121 automated unit tests).
+* **Testing**: xUnit automated testing suite covering catalog search, pagination, multi-facet filtering, dynamic recommendation bundling, smart hardware bundle discounts, BCrypt user authentication, profile management, verified customer review gates, hybrid shopping cart concurrency/self-healing, wishlist engine, multi-user address sharing, roadmap module routing, custom error handling, promo code validation, multi-step checkout order placement, Stripe test session & simulator fallback (approved and declined cards), idempotent webhook processing, atomic inventory decrement, concurrency token checks, customer order history isolation, admin order workflow state transitions, paid-order cancellation restock, product/category/promo code CRUD with slug and referential integrity checks, sales analytics dashboard with Chart.js, review visibility moderation, HTML email receipt encoding, and server-side security authorization/CSRF validation (133 automated unit tests).
 
 ---
 
@@ -80,7 +80,7 @@ dotnet run --project NexusGear
 | **B2** | **Recommendations** (dynamic "Frequently bought together" and "Similar products") | Popa-Ion Andrei | P3 (Week 11) | Complete |
 | **B3** | **Reviews and ratings** (verified buyers only, avg rating, admin moderation) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
 | **B4** | **Sales dashboard** (daily sales chart, top 5 products, AOV, time filters) | Șerban Alexandru-Cristian-George | P3 (Week 11) | Complete |
-| **B5** | **Discount codes** (% or fixed amount, expiry date, max uses, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
+| **B5** | **Discount codes** (% or fixed RON amount, expiry, max uses, admin CRUD, server-side) | Șerban Alexandru-Cristian-George | P3 (Week 10) | Complete |
 | **B6** | **Transactional email** (order confirmation via Mailtrap SMTP) | Șerban Alexandru-Cristian-George | P3 (Week 9) | Complete |
 | **B7** | **Wishlist** (favorites for authenticated users, move to cart) | Popa-Ion Andrei | P3 (Week 8) | Complete |
 
@@ -108,7 +108,7 @@ As required by the course specification, the following AI tools were utilized du
 
 As required by the course specification, the following AI tools were utilized during Stage 3:
 
-* **Antigravity IDE & Google Gemini**: Core full-stack engineering and development environment used for implementing Stage 3 deliverables: designing and implementing the smart hardware bundle scoping algorithm with unallocated quantity allocation (B2), real-time multi-row AJAX cart synchronization (`syncCartItemsDom`), Stripe Checkout Sandbox integration with HMAC cryptographic webhook verification and offline local payment simulator fallback (A6), atomic inventory decrement with `ConcurrencyCheck` tokens and automated restock on order cancellation (A7), transactional HTML order confirmation emails via Mailtrap SMTP (B6), verified buyer review moderation gates and admin review visibility controls (B3), category CRUD administration with referential protection (A9), Chart.js sales analytics dashboard with dynamic interval aggregations (B4), and expanding the automated test suite from 53 to 121 passing xUnit tests (`NexusGear.Tests`).
+* **Antigravity IDE & Google Gemini**: Core full-stack engineering and development environment used for implementing Stage 3 deliverables: designing and implementing the smart hardware bundle scoping algorithm with unallocated quantity allocation (B2), real-time multi-row AJAX cart synchronization (`syncCartItemsDom`), Stripe Checkout Sandbox integration with HMAC cryptographic webhook verification and offline local payment simulator fallback including declined card profiles (A6), atomic inventory decrement with `ConcurrencyCheck` tokens and paid-order restock on cancellation (A7), transactional HTML order confirmation emails via Mailtrap SMTP (B6), verified paid-buyer review moderation gates and admin review visibility controls (B3), category and promo code CRUD administration with referential protection (A9, B5), Chart.js sales analytics dashboard with dynamic interval aggregations (B4), and expanding the automated test suite from 53 to 133 passing xUnit tests (`NexusGear.Tests`).
 * **OpenAI ChatGPT**: Used for generating and refining the final P3 presentation slide deck (`NexusGear_P3_Presentation`) and structuring the comprehensive project technical report based on the architectural specifications, component blueprints, and prompts provided by Antigravity IDE.
 
 ---
@@ -119,13 +119,13 @@ For grading evaluation and local demonstration, the database is pre-seeded with 
 
 | Role | Email | Password | Access / Capabilities |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@nexusgear.ro` | `Admin123!` | Admin Back-Office (`/Admin`), Sales Analytics Dashboard (Chart.js), Order state transitions, Product & Category CRUD with image upload, Customer Review moderation |
+| **Administrator** | `admin@nexusgear.ro` | `Admin123!` | Admin Back-Office (`/Admin`), Sales Analytics Dashboard (Chart.js), Order state transitions, Product, Category & Promo Code CRUD, Customer Review moderation |
 | **Customer** | `customer@nexusgear.ro` | `Customer123!` | Customer Storefront, Saved address book, Wishlist management, Order history with status stepper, Verified buyer review submission |
 
 ### 🎟️ Preconfigured Promo Codes (B5)
 
 * `NEXUS10` — 10% percentage discount on entire cart subtotal (Active, max 100 uses).
-* `SETUP50` — \$50.00 fixed-amount discount on entire cart subtotal (Active, max 50 uses).
+* `SETUP50` — 50.00 RON fixed-amount discount on entire cart subtotal (Active, max 50 uses).
 * `EXPIRED20` — 20% discount (Expired, triggers graceful validation failure banner for demonstration).
 
 ---
