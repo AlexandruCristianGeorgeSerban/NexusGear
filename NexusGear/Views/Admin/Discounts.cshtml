@@ -1,0 +1,230 @@
+@model NexusGear.ViewModels.AdminDiscountListViewModel
+@{
+    ViewData["Title"] = "Promo Codes & Discounts — NexusGear Admin";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none text-muted">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">Promo Codes</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="nexus-card-static p-4 mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div>
+                <h1 class="h3 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                    <i class="bi bi-ticket-perforated-fill text-mint"></i> Promo Codes &amp; Vouchers
+                </h1>
+                <p class="text-muted small mb-0">Create and configure percentage or fixed RON discount vouchers with expiry dates and usage caps.</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="Dashboard" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Dashboard
+                </a>
+                <a asp-action="Orders" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-box-seam me-1"></i> Orders
+                </a>
+                <a asp-action="Products" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-cpu me-1"></i> Products
+                </a>
+                <a asp-action="Categories" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-tags me-1"></i> Categories
+                </a>
+                <a asp-action="Reviews" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-chat-square-quote me-1"></i> Reviews
+                </a>
+                <a asp-action="CreateDiscount" class="btn btn-tech btn-sm fw-bold">
+                    <i class="bi bi-plus-lg me-1"></i> New Promo Code
+                </a>
+            </div>
+        </div>
+
+        <!-- Metric Summary Bar -->
+        <div class="row g-3 mt-3 pt-3 border-top border-secondary border-opacity-25">
+            <div class="col-4 col-md">
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted very-small d-block text-uppercase">Total Vouchers</span>
+                    <strong class="text-white fs-5">@Model.TotalDiscountsCount</strong>
+                </div>
+            </div>
+            <div class="col-4 col-md">
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted very-small d-block text-uppercase">Active</span>
+                    <strong class="text-mint fs-5">@Model.ActiveDiscountsCount</strong>
+                </div>
+            </div>
+            <div class="col-4 col-md">
+                <div class="p-2 rounded bg-dark border border-secondary border-opacity-25 text-center">
+                    <span class="text-muted very-small d-block text-uppercase">Expired</span>
+                    <strong class="text-danger fs-5">@Model.ExpiredDiscountsCount</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="row g-3 align-items-center mt-2 pt-3 border-top border-secondary border-opacity-25">
+            <div class="col-md-6">
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var filter in new[] { "All", "Active", "Expired", "Exhausted" })
+                    {
+                        bool isActive = string.Equals(Model.Filter, filter, StringComparison.OrdinalIgnoreCase);
+                        <a asp-action="Discounts" asp-route-filter="@filter" asp-route-search="@Model.SearchTerm"
+                           class="btn btn-sm @(isActive ? "btn-tech" : "btn-outline-secondary text-muted") py-1 px-3 rounded-pill fw-medium">
+                            @filter
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <form method="get" asp-action="Discounts" class="d-flex gap-2 justify-content-md-end">
+                    @if (!string.IsNullOrWhiteSpace(Model.Filter) && Model.Filter != "All")
+                    {
+                        <input type="hidden" name="filter" value="@Model.Filter" />
+                    }
+                    <input type="text" name="search" value="@Model.SearchTerm" class="form-control form-control-nexus form-control-sm font-monospace" style="max-width: 240px;" placeholder="Search code (e.g. NEXUS10)..." />
+                    <button type="submit" class="btn btn-tech btn-sm px-3">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+                    {
+                        <a asp-action="Discounts" asp-route-filter="@Model.Filter" class="btn btn-outline-danger btn-sm" title="Clear Search">
+                            <i class="bi bi-x-lg"></i>
+                        </a>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discounts Table -->
+    @if (!Model.Discounts.Any())
+    {
+        <div class="nexus-card-static p-5 text-center">
+            <i class="bi bi-ticket-perforated text-muted display-4 d-block mb-3"></i>
+            <h5 class="text-white fw-bold mb-2">No promo codes found</h5>
+            <p class="text-muted small mb-3">No discount vouchers match your selected status filter or search query.</p>
+            <a asp-action="CreateDiscount" class="btn btn-tech btn-sm fw-bold">
+                <i class="bi bi-plus-lg me-1"></i> Create First Promo Code
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="nexus-card-static p-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0 align-middle">
+                    <thead style="background-color: #0f172a; border-bottom: 1px solid rgba(148, 163, 184, 0.2);">
+                        <tr class="text-muted small text-uppercase">
+                            <th scope="col" class="ps-4 py-3">Voucher Code</th>
+                            <th scope="col" class="py-3">Type</th>
+                            <th scope="col" class="py-3 text-end">Value</th>
+                            <th scope="col" class="py-3 text-center">Redemptions</th>
+                            <th scope="col" class="py-3">Expiry Date</th>
+                            <th scope="col" class="py-3 text-center">Status</th>
+                            <th scope="col" class="pe-4 py-3 text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Discounts)
+                        {
+                            var usagePct = item.MaxUses > 0 ? Math.Min(100, (int)Math.Round((double)item.UsedCount / item.MaxUses * 100)) : 0;
+                            <tr style="border-bottom: 1px solid rgba(148, 163, 184, 0.1);">
+                                <td class="ps-4 py-3">
+                                    <code class="font-monospace text-mint px-2 py-1 rounded bg-dark border border-mint border-opacity-50 fw-bold fs-6">@item.Code</code>
+                                    <span class="text-muted very-small d-block mt-1" style="font-size: 0.72rem;">Linked Orders: @item.OrdersCount</span>
+                                </td>
+                                <td class="py-3 small">
+                                    @if (item.DiscountType == "Percentage")
+                                    {
+                                        <span class="badge bg-dark border border-info text-info"><i class="bi bi-percent me-1"></i>Percentage</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark border border-secondary text-white"><i class="bi bi-cash-coin me-1 text-mint"></i>Fixed (RON)</span>
+                                    }
+                                </td>
+                                <td class="py-3 text-end font-monospace fw-bold text-white">
+                                    @(item.DiscountType == "Percentage" ? $"{item.DiscountValue:0.##}%" : $"{item.DiscountValue:N2} RON")
+                                </td>
+                                <td class="py-3 text-center" style="min-width: 140px;">
+                                    <div class="small font-monospace text-white mb-1">@item.UsedCount / @item.MaxUses</div>
+                                    <div class="progress mx-auto" style="height: 5px; max-width: 100px; background-color: #1E293B;">
+                                        <div class="progress-bar @(item.IsExhausted ? "bg-warning" : "bg-mint")" style="width: @usagePct%;"></div>
+                                    </div>
+                                </td>
+                                <td class="py-3 small @(item.IsExpired ? "text-danger" : "text-muted")">
+                                    <i class="bi bi-calendar-event me-1"></i>@item.ExpiryDate.ToString("dd MMM yyyy")
+                                </td>
+                                <td class="py-3 text-center">
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-dark border border-mint text-mint px-3 py-2">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Active
+                                        </span>
+                                    }
+                                    else if (item.IsExpired)
+                                    {
+                                        <span class="badge bg-dark border border-danger text-danger px-3 py-2">
+                                            <i class="bi bi-clock-history me-1"></i> Expired
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-dark border border-warning text-warning px-3 py-2">
+                                            <i class="bi bi-slash-circle me-1"></i> Exhausted
+                                        </span>
+                                    }
+                                </td>
+                                <td class="pe-4 py-3 text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a asp-action="EditDiscount" asp-route-id="@item.DiscountCodeId" class="btn btn-outline-light btn-sm" title="Edit Promo Code">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        @if (!item.IsExpired)
+                                        {
+                                            <form method="post" asp-action="ExpireDiscount" asp-route-id="@item.DiscountCodeId" class="d-inline"
+                                                  onsubmit="return confirm('Immediately expire promo code \'@item.Code\'?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="filter" value="@Model.Filter" />
+                                                <input type="hidden" name="search" value="@Model.SearchTerm" />
+                                                <button type="submit" class="btn btn-outline-warning btn-sm" title="Expire Immediately">
+                                                    <i class="bi bi-hourglass-bottom"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        @if (item.OrdersCount == 0)
+                                        {
+                                            <form method="post" asp-action="DeleteDiscount" asp-route-id="@item.DiscountCodeId" class="d-inline"
+                                                  onsubmit="return confirm('Permanently delete unused promo code \'@item.Code\'?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete Promo Code">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-outline-secondary btn-sm opacity-50" disabled
+                                                    title="Cannot delete promo code referenced in existing orders. Expire it instead.">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-3 bg-dark border-top border-secondary border-opacity-25 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="text-muted small">Showing <strong class="text-white">@Model.Discounts.Count</strong> promo code(s)</span>
+                <span class="text-muted very-small" style="font-size: 0.75rem;">Redeemed vouchers remain archived for historical order accounting.</span>
+            </div>
+        </div>
+    }
+</div>

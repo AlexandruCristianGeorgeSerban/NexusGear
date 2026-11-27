@@ -1,0 +1,137 @@
+@model NexusGear.ViewModels.AdminDiscountFormViewModel
+@{
+    bool isEdit = Model.DiscountCodeId.HasValue;
+    ViewData["Title"] = isEdit ? $"Edit {Model.Code} — NexusGear Admin" : "Create Promo Code — NexusGear Admin";
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none text-muted">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-action="Discounts" class="text-decoration-none text-muted">Promo Codes</a></li>
+            <li class="breadcrumb-item active text-mint" aria-current="page">@(isEdit ? "Edit Voucher" : "New Voucher")</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="nexus-card-static p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+                    <div>
+                        <h1 class="h3 fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                            <i class="bi @(isEdit ? "bi-pencil-square" : "bi-ticket-perforated-fill") text-mint"></i>
+                            @(isEdit ? "Edit Promo Voucher" : "Create New Promo Code")
+                        </h1>
+                        <p class="text-muted small mb-0">Configure percentage or fixed RON discounts validated server-side at checkout.</p>
+                    </div>
+                    <a asp-action="Discounts" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                </div>
+
+                @if (isEdit && Model.UsedCount > 0)
+                {
+                    <div class="alert alert-info bg-dark border border-info border-opacity-50 text-white d-flex align-items-center gap-3 mb-4">
+                        <i class="bi bi-info-circle-fill text-info fs-4"></i>
+                        <div class="small">
+                            <strong>Current Redemptions:</strong> This voucher has been redeemed <strong>@Model.UsedCount time(s)</strong>. Historical orders keep their original snapshotted discount amount.
+                        </div>
+                    </div>
+                }
+
+                <form method="post" asp-action="@(isEdit ? "EditDiscount" : "CreateDiscount")">
+                    @Html.AntiForgeryToken()
+                    @if (isEdit)
+                    {
+                        <input type="hidden" asp-for="DiscountCodeId" />
+                        <input type="hidden" asp-for="UsedCount" />
+                    }
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+                    <!-- Code -->
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label-nexus">Promo Code</label>
+                        <input asp-for="Code" class="form-control form-control-nexus font-monospace text-uppercase" placeholder="e.g. SPRING20" required />
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                        <div class="form-text text-muted very-small" style="font-size: 0.75rem;">
+                            Letters, numbers, hyphens, or underscores. Automatically stored in uppercase.
+                        </div>
+                    </div>
+
+                    <!-- Discount Type & Value Row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="DiscountType" class="form-label-nexus">Discount Type</label>
+                            <select asp-for="DiscountType" id="discountTypeSelect" class="form-select form-control-nexus" onchange="syncDiscountUnit(this.value)">
+                                <option value="Percentage">Percentage (%)</option>
+                                <option value="FixedAmount">Fixed Amount (RON)</option>
+                            </select>
+                            <span asp-validation-for="DiscountType" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DiscountValue" class="form-label-nexus">Discount Value</label>
+                            <div class="input-group">
+                                <input asp-for="DiscountValue" id="discountValueInput" type="number" step="0.01" min="0.01" class="form-control form-control-nexus font-monospace" placeholder="15" required />
+                                <span id="discountUnitBadge" class="input-group-text font-monospace fw-bold">@(Model.DiscountType == "FixedAmount" ? "RON" : "%")</span>
+                            </div>
+                            <span asp-validation-for="DiscountValue" class="text-danger small"></span>
+                            <div id="discountHint" class="form-text text-muted very-small" style="font-size: 0.75rem;">
+                                @(Model.DiscountType == "FixedAmount" ? "Fixed deduction in RON applied against cart subtotal." : "Percentage deduction between 0.01% and 100%.")
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expiry Date & Max Uses Row -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="ExpiryDate" class="form-label-nexus">Expiry Date (UTC)</label>
+                            <input asp-for="ExpiryDate" type="date" class="form-control form-control-nexus" required />
+                            <span asp-validation-for="ExpiryDate" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="MaxUses" class="form-label-nexus">Maximum Redemptions</label>
+                            <input asp-for="MaxUses" type="number" min="1" class="form-control form-control-nexus font-monospace" required />
+                            <span asp-validation-for="MaxUses" class="text-danger small"></span>
+                            @if (isEdit)
+                            {
+                                <div class="form-text text-muted very-small" style="font-size: 0.75rem;">
+                                    Already used: @Model.UsedCount time(s).
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 pt-3 border-top border-secondary border-opacity-25">
+                        <a asp-action="Discounts" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-tech px-4 fw-bold">
+                            <i class="bi @(isEdit ? "bi-check2-circle" : "bi-plus-lg") me-1"></i>
+                            @(isEdit ? "Save Promo Code" : "Create Promo Code")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function syncDiscountUnit(type) {
+            const badge = document.getElementById('discountUnitBadge');
+            const hint = document.getElementById('discountHint');
+            if (type === 'FixedAmount') {
+                badge.textContent = 'RON';
+                hint.textContent = 'Fixed deduction in RON applied against cart subtotal.';
+            } else {
+                badge.textContent = '%';
+                hint.textContent = 'Percentage deduction between 0.01% and 100%.';
+            }
+        }
+    </script>
+}

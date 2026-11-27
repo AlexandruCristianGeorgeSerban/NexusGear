@@ -193,3 +193,80 @@ public class AdminReviewRowViewModel
     public DateTime CreatedAt { get; set; }
     public bool IsHidden { get; set; }
 }
+
+// ==========================================
+// Discount Codes Management ViewModels (B5 Admin CRUD)
+// ==========================================
+
+public class AdminDiscountListViewModel
+{
+    public List<AdminDiscountRowViewModel> Discounts { get; set; } = new();
+    public string Filter { get; set; } = "All"; // "All", "Active", "Expired", "Exhausted"
+    public string? SearchTerm { get; set; }
+    public int TotalDiscountsCount { get; set; }
+    public int ActiveDiscountsCount { get; set; }
+    public int ExpiredDiscountsCount { get; set; }
+}
+
+public class AdminDiscountRowViewModel
+{
+    public int DiscountCodeId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string DiscountType { get; set; } = "Percentage";
+    public decimal DiscountValue { get; set; }
+    public DateTime ExpiryDate { get; set; }
+    public int MaxUses { get; set; }
+    public int UsedCount { get; set; }
+    public int OrdersCount { get; set; }
+
+    public bool IsExpired => DateTime.UtcNow > ExpiryDate;
+    public bool IsExhausted => UsedCount >= MaxUses;
+    public bool IsActive => !IsExpired && !IsExhausted;
+    public string StatusLabel => IsExpired ? "Expired" : IsExhausted ? "Exhausted" : "Active";
+}
+
+public class AdminDiscountFormViewModel : IValidatableObject
+{
+    public int? DiscountCodeId { get; set; }
+
+    [Required(ErrorMessage = "Promo code is required.")]
+    [StringLength(50, ErrorMessage = "Promo code cannot exceed 50 characters.")]
+    [RegularExpression(@"^[A-Za-z0-9_-]+$", ErrorMessage = "Promo code can only contain letters, numbers, underscores, and hyphens.")]
+    public string Code { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Discount type is required.")]
+    public string DiscountType { get; set; } = "Percentage";
+
+    [Required(ErrorMessage = "Discount value is required.")]
+    [Range(0.01, 100000.00, ErrorMessage = "Discount value must be greater than zero.")]
+    public decimal DiscountValue { get; set; }
+
+    [Required(ErrorMessage = "Expiry date is required.")]
+    [DataType(DataType.Date)]
+    public DateTime ExpiryDate { get; set; } = DateTime.UtcNow.AddMonths(3).Date;
+
+    [Required(ErrorMessage = "Maximum uses limit is required.")]
+    [Range(1, 1000000, ErrorMessage = "Maximum uses must be at least 1.")]
+    public int MaxUses { get; set; } = 100;
+
+    public int UsedCount { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!string.Equals(DiscountType, "Percentage", StringComparison.Ordinal) &&
+            !string.Equals(DiscountType, "FixedAmount", StringComparison.Ordinal))
+        {
+            yield return new ValidationResult(
+                "Discount type must be either 'Percentage' or 'FixedAmount'.",
+                new[] { nameof(DiscountType) });
+        }
+
+        if (string.Equals(DiscountType, "Percentage", StringComparison.Ordinal) &&
+            (DiscountValue <= 0 || DiscountValue > 100))
+        {
+            yield return new ValidationResult(
+                "Percentage discount value must be between 0.01% and 100%.",
+                new[] { nameof(DiscountValue) });
+        }
+    }
+}
